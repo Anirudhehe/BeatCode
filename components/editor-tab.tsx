@@ -19,6 +19,15 @@ export default function EditorTab({ code, setCode, language, setLanguage, onRunC
     { value: "java", label: "Java", icon: "java" },
   ]
 
+  const getLineNumbers = () => {
+    const lines = code.split('\n').length;
+    return Array.from({ length: Math.max(10, lines) }, (_, i) => (
+      <div key={i} className="h-6 w-full text-center">
+        {i + 1}
+      </div>
+    ));
+  };
+
   return (
     <div className="bg-[#132F4C] rounded-lg border border-[#1E3A5F] overflow-hidden">
       <div className="flex justify-between items-center p-4 border-b border-[#1E3A5F]">
@@ -59,11 +68,7 @@ export default function EditorTab({ code, setCode, language, setLanguage, onRunC
       <div className="p-4">
         <div className="relative">
           <div className="absolute left-0 top-0 h-full w-12 bg-[#0A1929] border-r border-[#1E3A5F] flex flex-col items-center pt-4 text-xs text-[#94A3B8] font-mono">
-            {Array.from({ length: 10 }, (_, i) => (
-              <div key={i} className="h-6 w-full text-center">
-                {i + 1}
-              </div>
-            ))}
+            {getLineNumbers()}
           </div>
           <textarea
             value={code}
