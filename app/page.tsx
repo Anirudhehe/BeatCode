@@ -1,68 +1,91 @@
 "use client"
 
-import { useState } from "react"
-import Header from "@/components/header"
-import TabNavigation from "@/components/tab-navigation"
-import EditorTab from "@/components/editor-tab"
-import ResultsTab from "@/components/results-tab"
-import VisualizeTab from "@/components/visualize-tab"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import Image from "next/image"
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState("editor")
-  const [code, setCode] = useState("")
-  const [language, setLanguage] = useState("python")
-  const [output, setOutput] = useState("")
-  const [optimizedCode, setOptimizedCode] = useState("")
-  const [timeData, setTimeData] = useState({ current: 0.2, optimal: 0.04 })
-  const [memoryData, setMemoryData] = useState({ current: 5.2, optimal: 2.1 })
-
-  const handleRunCode = () => {
-    // Simulate code execution
-    setOutput(`Running ${language} code...\n\nOutput:\n> Hello, BeatCode!\n> Your solution works for basic test cases.`)
-
-    // Simulate optimization suggestions
-    if (language === "python") {
-      setOptimizedCode(`def solution(nums):
-    # Use a hashmap for O(1) lookup
-    seen = {}
-    for i, num in enumerate(nums):
-        complement = target - num
-        if complement in seen:
-            return [seen[complement], i]
-        seen[num] = i
-    return []`)
-    }
-
-    // Update visualization data
-    setTimeData({ current: 0.2, optimal: 0.04 })
-    setMemoryData({ current: 5.2, optimal: 2.1 })
-  }
-
   return (
-    <main className="min-h-screen bg-[#0A1929] flex flex-col">
-      <div className="container mx-auto px-6 py-8 flex-1 flex flex-col max-w-7xl">
-        <Header />
-
-        <div className="mt-10 mb-8">
-          <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
-        </div>
-
-        <div className="flex-1">
-          {activeTab === "editor" && (
-            <EditorTab
-              code={code}
-              setCode={setCode}
-              language={language}
-              setLanguage={setLanguage}
-              onRunCode={handleRunCode}
-            />
-          )}
-
-          {activeTab === "results" && <ResultsTab output={output} optimizedCode={optimizedCode} />}
-
-          {activeTab === "visualize" && <VisualizeTab timeData={timeData} memoryData={memoryData} />}
+    <main 
+      className="min-h-screen bg-gradient-to-br from-[#0A1929] via-[#1a1339] to-[#2d1854] overflow-hidden relative font-['Consolas']"
+      style={{
+        backgroundSize: '400% 400%',
+        animation: 'gradient 15s ease infinite',
+      }}
+    >
+      {/* Hero Section */}
+      <div className="container mx-auto px-6 py-12">
+        <div className="max-w-3xl mx-auto text-center">
+          <h1 className="text-9xl md:text-9xl font-bold text-white mb-6">
+            BeatCode
+          </h1>
+          <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
+            Practice <span className="font-bold text-white">smarter</span>. 
+            Visualize <span className="font-bold text-white">better</span>. 
+            Optimize <span className="font-bold text-white">faster</span> — 
+            all in one playful coding arena.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Link href="/editor">
+              <Button className="bg-[#007FFF] hover:bg-[#0072E5] text-white px-8 py-6 text-lg rounded-full transform hover:scale-110 transition-all duration-300 hover:shadow-xl hover:shadow-[#007FFF]/40 group">
+                <span className="flex items-center gap-2">
+                  <span className="group-hover:text-white">Show Me What's Better</span>
+                </span>
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
+
+      {/* Features Section */}
+      <div className="container mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="bg-black/20 p-8 rounded-3xl backdrop-blur-sm text-center">
+            <div className="w-16 h-16 mb-4 mx-auto">
+              <Image
+                src="/icons/analysis.png"
+                alt="Analysis Icon"
+                width={64}
+                height={64}
+                className="object-contain"
+              />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">Real-time Analysis</h3>
+            <p className="text-gray-400">Visualize your code performance and get instant feedback on optimization opportunities.</p>
+          </div>
+          <div className="bg-black/20 p-8 rounded-3xl backdrop-blur-sm text-center">
+            <div className="w-16 h-16 mb-4 mx-auto">
+              <Image
+                src="/icons/languages.png"
+                alt="Languages Icon"
+                width={64}
+                height={64}
+                className="object-contain"
+              />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">Multiple Languages</h3>
+            <p className="text-gray-400">Support for Python, C++, Java and more programming languages.</p>
+          </div>
+          <div className="bg-black/20 p-8 rounded-3xl backdrop-blur-sm text-center">
+            <div className="w-16 h-16 mb-4 mx-auto">
+              <Image
+                src="/icons/learning.png"
+                alt="Learning Icon"
+                width={64}
+                height={64}
+                className="object-contain"
+              />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-3">Interactive Learning</h3>
+            <p className="text-gray-400">Learn through hands-on coding challenges and real-time performance metrics.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Background Gradient Pills */}
+      <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-purple-500/30 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-20 left-0 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
     </main>
   )
 }
+

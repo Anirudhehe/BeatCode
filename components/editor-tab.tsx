@@ -73,7 +73,7 @@ export default function EditorTab({ code, setCode, language, setLanguage, onRunC
           <textarea
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className="w-full h-[500px] pl-12 p-4 font-mono text-sm bg-[#0A1929] text-white border-0 focus:outline-none focus:ring-0 resize-none"
+            className="w-full h-[500px] pl-12 p-4 font-['Consolas'] text-sm bg-[#0A1929] text-white border-0 focus:outline-none focus:ring-0 resize-none"
             placeholder="  Write your code here..."
             spellCheck="false"
           />
