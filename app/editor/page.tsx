@@ -1,11 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import Header from "@/components/header"
 import TabNavigation from "@/components/tab-navigation"
 import EditorTab from "@/components/editor-tab"
 import ResultsTab from "@/components/results-tab"
 import VisualizeTab from "@/components/visualize-tab"
+
 
 export default function EditorPage() {
   const [activeTab, setActiveTab] = useState("editor")
