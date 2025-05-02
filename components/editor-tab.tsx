@@ -2,7 +2,7 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Play } from "lucide-react"
+import { Play, Loader2 } from "lucide-react"
 
 interface EditorTabProps {
   code: string
@@ -10,13 +10,23 @@ interface EditorTabProps {
   language: string
   setLanguage: (language: string) => void
   onRunCode: () => void
+  loading?: boolean // Add loading prop
 }
 
-export default function EditorTab({ code, setCode, language, setLanguage, onRunCode }: EditorTabProps) {
+export default function EditorTab({ 
+  code, 
+  setCode, 
+  language, 
+  setLanguage, 
+  onRunCode,
+  loading = false // Default to false
+}: EditorTabProps) {
   const languageOptions = [
     { value: "python", label: "Python", icon: "py" },
     { value: "cpp", label: "C++", icon: "cpp" },
     { value: "java", label: "Java", icon: "java" },
+    { value: "c", label: "C", icon: "c" },
+    { value: "javascript", label: "JavaScript", icon: "js" },
   ]
 
   const getLineNumbers = () => {
@@ -58,10 +68,20 @@ export default function EditorTab({ code, setCode, language, setLanguage, onRunC
 
         <Button
           onClick={onRunCode}
-          className="bg-[#007FFF] hover:bg-[#0072E5] text-white rounded-md h-9 px-4 flex items-center gap-2"
+          disabled={loading}
+          className="bg-[#007FFF] hover:bg-[#0072E5] text-white rounded-md h-9 px-4 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Play className="h-4 w-4" />
-          Run
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Optimizing...
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4" />
+              Run
+            </>
+          )}
         </Button>
       </div>
 
