@@ -39,31 +39,6 @@ export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps
   const timeOptimalRef = useRef<HTMLDivElement>(null)
   const memoryBarRef = useRef<HTMLDivElement>(null)
   const memoryOptimalRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    // Create a timeline for smoother animations
-    const tl = gsap.timeline()
-
-    // Reset bars
-    tl.set([timeBarRef.current, timeOptimalRef.current, memoryBarRef.current, memoryOptimalRef.current], {
-      height: 0,
-    })
-
-    // Animate bars
-    tl.to([timeBarRef.current, timeOptimalRef.current], {
-      height: (index) => `${(index === 0 ? timeData.current : timeData.optimal) / Math.max(timeData.current, timeData.optimal) * 100}%`,
-      duration: 1,
-      ease: "power2.out"
-    })
-
-    tl.to([memoryBarRef.current, memoryOptimalRef.current], {
-      height: (index) => `${(index === 0 ? memoryData.current : memoryData.optimal) / Math.max(memoryData.current, memoryData.optimal) * 100}%`,
-      duration: 1,
-      ease: "power2.out"
-    }, "-=0.5")  // Start slightly before previous animation ends
-
-  }, [timeData, memoryData])
-
   return (
     <div className="bg-[#132F4C] rounded-lg border border-[#1E3A5F] overflow-hidden">
       <div className="p-4 border-b border-[#1E3A5F]">
@@ -71,64 +46,58 @@ export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps
       </div>
 
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols- gap-6">
           <div className="bg-[#0A1929] p-4 rounded-md border border-[#1E3A5F]">
-            <h3 className="text-xs uppercase tracking-wider text-[#94A3B8] mb-3">Time Complexity</h3>
-            <div className="flex flex-col space-y-4">
+            <h3 className="text-xs uppercase tracking-wider text-[#94A3B8] mb-3">SPACE COMPLEXITY</h3>
+            <div className="flex flex-col space-y-8">
               <div className="flex items-center justify-between">
-                <span className="text-white">Your solution</span>
-                <div className="flex items-center gap-4">
-                  <div className="h-32 flex items-end">
-                    <div ref={timeBarRef} className="w-4 bg-[#007FFF] rounded-t-lg transition-all duration-300" style={{ height: '0%' }} />
+                <span className="text-white font-mono">Your solution</span>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-white font-mono">{memoryData.current}MB</span>
+                    <span className="text-xs bg-[#132F4C] text-[#94A3B8] px-2 py-0.5 rounded-sm">O(n)</span>
                   </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-white font-mono">{timeData.current}s</span>
-                    <span className="text-xs bg-[#132F4C] text-[#94A3B8] px-2 py-0.5 rounded">O(n²)</span>
+                  <div className="grid grid-cols-10 gap-0.5">
+                    {Array.from({ length: 100 }, (_, i) => {
+                      const intensity = i < (memoryData.current / Math.max(memoryData.current, memoryData.optimal) * 100)
+                        ? (1 - (i / 100)) * 0.8 + 0.2
+                        : 0.1;
+                      return (
+                        <div
+                          key={i}
+                          className="w-2 h-2 rounded-sm memory-block-current"
+                          style={{
+                            backgroundColor: `rgba(0, 127, 255, ${intensity})`
+                          }}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-white">Optimal solution</span>
-                <div className="flex items-center gap-4">
-                  <div className="h-32 flex items-end">
-                    <div ref={timeOptimalRef} className="w-4 bg-[#00C853] rounded-t-lg transition-all duration-300" style={{ height: '0%' }} />
+                <span className="text-white font-mono">Optimal solution</span>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-white font-mono">{memoryData.optimal}MB</span>
+                    <span className="text-xs bg-[#132F4C] text-[#94A3B8] px-2 py-0.5 rounded-sm">O(1)</span>
                   </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-white font-mono">{timeData.optimal}s</span>
-                    <span className="text-xs bg-[#132F4C] text-[#94A3B8] px-2 py-0.5 rounded">O(n)</span>
+                  <div className="grid grid-cols-10 gap-0.5">
+                    {Array.from({ length: 100 }, (_, i) => {
+                      const intensity = i < (memoryData.optimal / Math.max(memoryData.current, memoryData.optimal) * 100)
+                        ? (1 - (i / 100)) * 0.8 + 0.2
+                        : 0.1;
+                      return (
+                        <div
+                          key={i}
+                          className="w-2 h-2 rounded-sm memory-block-optimal"
+                          style={{
+                            backgroundColor: `rgba(0, 200, 83, ${intensity})`
+                          }}
+                        />
+                      );
+                    })}
                   </div>
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 flex items-center justify-center">
-              <div className="flex flex-col items-center">
-                <ArrowDown className="h-4 w-4 text-[#007FFF]" />
-                <span className="text-[#007FFF] font-medium">
-                  {calculateImprovement(timeData.current, timeData.optimal)}% faster
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-[#0A1929] p-4 rounded-md border border-[#1E3A5F]">
-            <h3 className="text-xs uppercase tracking-wider text-[#94A3B8] mb-3">Memory Usage</h3>
-            <div className="flex flex-col space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-white">Your solution</span>
-                <div className="flex items-center gap-4">
-                  <div className="h-32 flex items-end">
-                    <div ref={memoryBarRef} className="w-4 bg-[#007FFF] rounded-t-lg transition-all duration-300" style={{ height: '0%' }} />
-                  </div>
-                  <span className="text-white font-mono">{memoryData.current}MB</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-white">Optimal solution</span>
-                <div className="flex items-center gap-4">
-                  <div className="h-32 flex items-end">
-                    <div ref={memoryOptimalRef} className="w-4 bg-[#00C853] rounded-t-lg transition-all duration-300" style={{ height: '0%' }} />
-                  </div>
-                  <span className="text-white font-mono">{memoryData.optimal}MB</span>
                 </div>
               </div>
             </div>
@@ -203,38 +172,6 @@ export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps
             </LineChart>
           </ResponsiveContainer>
         </div>
-
-        {/* <div className="h-[300px] mt-6">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={[
-              {
-                name: "Time",
-                yourTime: timeData.current,
-                optimalTime: timeData.optimal
-              },
-              {
-                name: "Memory",
-                yourTime: memoryData.current,
-                optimalTime: memoryData.optimal
-              }
-            ]}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" />
-              <XAxis dataKey="name" stroke="#94A3B8" />
-              <YAxis stroke="#94A3B8" />
-              <Tooltip 
-                contentStyle={{
-                  backgroundColor: "#0A1929",
-                  borderColor: "#1E3A5F",
-                  color: "#FFFFFF",
-                  borderRadius: "4px"
-                }}
-              />
-              <Legend wrapperStyle={{ color: "#94A3B8" }} />
-              <Bar dataKey="yourTime" name="Your Solution" fill="#007FFF" />
-              <Bar dataKey="optimalTime" name="Optimal Solution" fill="#00C853" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div> */}
 
         <div className="mt-6 p-4 bg-[#0A1929] rounded-md border border-[#1E3A5F]">
           <h3 className="text-xs uppercase tracking-wider text-[#94A3B8] mb-2">Analysis</h3>
