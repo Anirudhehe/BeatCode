@@ -149,25 +149,26 @@ export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
               data={[
-                { time: 0, current: timeData.current * 0.2, optimal: timeData.optimal * 0.2 },
-                { time: 1, current: timeData.current * 0.8, optimal: timeData.optimal * 0.4 },
-                { time: 2, current: timeData.current * 2.0, optimal: timeData.optimal * 0.6 },
-                { time: 3, current: timeData.current * 1.2, optimal: timeData.optimal * 0.8 },
-                { time: 4, current: timeData.current * 1.4, optimal: timeData.optimal * 0.7 },
-                { time: 5, current: timeData.current * 1.3, optimal: timeData.optimal * 0.9 },
-                { time: 6, current: timeData.current * 1.2, optimal: timeData.optimal * 0.85 }
+                { size: 0, current: timeData.current * 0.2, optimal: timeData.optimal * 0.2 },
+                { size: 1, current: timeData.current * 0.8, optimal: timeData.optimal * 0.4 },
+                { size: 2, current: timeData.current * 2.0, optimal: timeData.optimal * 0.6 },
+                { size: 3, current: timeData.current * 1.2, optimal: timeData.optimal * 0.8 },
+                { size: 4, current: timeData.current * 1.4, optimal: timeData.optimal * 0.7 },
+                { size: 5, current: timeData.current * 1.3, optimal: timeData.optimal * 0.9 },
+                { size: 6, current: timeData.current * 1.2, optimal: timeData.optimal * 0.85 }
               ]}
-              margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
+              margin={{ top: 20, right: 30, left: 50, bottom: 40 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" />
               <XAxis 
-                dataKey="time" 
+                dataKey="size" 
                 stroke="#94A3B8"
-                label={{ value: 'Time', position: 'bottom', fill: '#94A3B8', dy: 25 }}
+                label={{ value: 'Input Size (n)', position: 'bottom', fill: '#94A3B8', dy: 25 }}
               />
               <YAxis 
                 stroke="#94A3B8"
-                label={{ value: 'Operations', angle: -90, position: 'left', fill: '#94A3B8', dx: -30 }}
+                label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fill: '#94A3B8', dx: -10 }}
+                tickFormatter={(value) => `${value.toFixed(1)}s`}
               />
               <Tooltip
                 contentStyle={{
@@ -176,6 +177,7 @@ export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps
                   color: "#FFFFFF",
                   borderRadius: "4px"
                 }}
+                formatter={(value: number) => [`${value.toFixed(2)}s`, 'Time']}
               />
               <Legend 
                 wrapperStyle={{ color: "#94A3B8" }} 
