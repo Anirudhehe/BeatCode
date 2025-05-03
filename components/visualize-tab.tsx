@@ -115,6 +115,54 @@ export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps
     }
   }, [memoryData])
 
+  useEffect(() => {
+    // Create a timeline for time complexity animation
+    const tlTime = gsap.timeline({ paused: true })
+    
+    // Get the time complexity container
+    const timeContainer = document.querySelector('.time-complexity-container')
+    
+    // Set initial state
+    tlTime.set(timeContainer, {
+      opacity: 0,
+      y: 20
+    })
+    
+    // Create animation
+    tlTime.to(timeContainer, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: "power2.out"
+    })
+
+    // Create intersection observer
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          // Play animation when element comes into view
+          tlTime.play()
+          // Unobserve after animation starts
+          observer.unobserve(entry.target)
+        }
+      })
+    }, {
+      threshold: 0.2 // Start animation when 20% of the element is visible
+    })
+
+    // Start observing the time complexity container
+    if (timeContainer) {
+      observer.observe(timeContainer)
+    }
+
+    return () => {
+      tlTime.kill()
+      if (timeContainer) {
+        observer.unobserve(timeContainer)
+      }
+    }
+  }, [timeData])
+
   return (
     <div className="bg-[#132F4C] rounded-lg border border-[#1E3A5F] overflow-hidden">
       <div className="p-4 border-b border-[#1E3A5F]">
@@ -190,7 +238,7 @@ export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps
 
         <Separator className="my-6 bg-[#1E3A5F]" />
 
-        <div className="h-[400px] mb-8">
+        <div className="h-[400px] mb-8 time-complexity-container" style={{ opacity: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart 
               data={[
