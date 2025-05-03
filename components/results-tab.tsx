@@ -1,5 +1,6 @@
 import { Separator } from "@/components/ui/separator"
 import { useState } from "react"
+import VisualizeTab from "./visualize-tab"
 
 interface ResultsTabProps {
   output: string;
@@ -8,35 +9,30 @@ interface ResultsTabProps {
 }
 
 export default function ResultsTab({ output, optimizedCode, originalCode }: ResultsTabProps) {
-  const [loading, setLoading] = useState(false);
+  const [showVisualization, setShowVisualization] = useState(false);
 
-  const handleVisualize = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/compare', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          originalCode, 
-          optimizedCode, 
-          language: 'python' // Adjust language as needed
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to compare solutions');
-      }
-
-      // Handle the response data as needed
-      console.log('Comparison result:', data.result);
-    } catch (error) {
-      console.error("Error comparing solutions:", error);
-      alert(error.message || "Failed to compare solutions. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+  const handleVisualize = () => {
+    // Store the code in localStorage before navigating
+    localStorage.setItem('originalCode', originalCode);
+    localStorage.setItem('optimizedCode', optimizedCode);
+    localStorage.setItem('language', 'python'); // Or get this from props
+    
+    setShowVisualization(true);
   };
+
+  if (showVisualization) {
+    return (
+      <div>
+        <button 
+          onClick={() => setShowVisualization(false)} 
+          className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
+        >
+          Back to Results
+        </button>
+        <VisualizeTab />
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 gap-6 h-full">
@@ -66,9 +62,8 @@ export default function ResultsTab({ output, optimizedCode, originalCode }: Resu
         <button 
           onClick={handleVisualize} 
           className="bg-blue-500 text-white px-4 py-2 rounded"
-          disabled={loading}
         >
-          {loading ? 'Loading...' : 'Visualize'}
+          Visualize
         </button>
       </div>
     </div>

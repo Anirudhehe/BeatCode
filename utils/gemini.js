@@ -45,11 +45,9 @@ export const compareSolutions = async(userCode,language,optimalSolution)=>{
     OPTIMIZED SOLUTION:
     ${optimalSolution}
     Please Provide :
-    1. Time complexity Comparision
-    2. Space complexity Comparision
-    3. Readablity Comparision
-    4. Maintainability Comparision
-    5. Edge case handling comparison`;
+    1. Time complexity of original solution in one word like O(n).
+    2. Time complexity of optimized solution in one word like O(n).
+`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
