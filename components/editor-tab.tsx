@@ -1,8 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Play } from "lucide-react"
+import { Play, Loader2, LightbulbIcon } from "lucide-react"
 
 interface EditorTabProps {
   code: string
@@ -10,13 +11,27 @@ interface EditorTabProps {
   language: string
   setLanguage: (language: string) => void
   onRunCode: () => void
+  loading?: boolean
+  hints?: string[]
+  onViewOptimizedCode?: () => void
 }
 
-export default function EditorTab({ code, setCode, language, setLanguage, onRunCode }: EditorTabProps) {
+export default function EditorTab({ 
+  code, 
+  setCode, 
+  language, 
+  setLanguage, 
+  onRunCode,
+  loading = false,
+  hints = [],
+  onViewOptimizedCode
+}: EditorTabProps) {
   const languageOptions = [
     { value: "python", label: "Python", icon: "py" },
     { value: "cpp", label: "C++", icon: "cpp" },
     { value: "java", label: "Java", icon: "java" },
+    { value: "c", label: "C", icon: "c" },
+    { value: "javascript", label: "JavaScript", icon: "js" },
   ]
 
   const getLineNumbers = () => {
@@ -58,25 +73,71 @@ export default function EditorTab({ code, setCode, language, setLanguage, onRunC
 
         <Button
           onClick={onRunCode}
-          className="bg-[#007FFF] hover:bg-[#0072E5] text-white rounded-md h-9 px-4 flex items-center gap-2"
+          disabled={loading}
+          className="bg-[#007FFF] hover:bg-[#0072E5] text-white rounded-md h-9 px-4 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Play className="h-4 w-4" />
-          Run
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Just a min..
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4" />
+              Give me hints!
+            </>
+          )}
         </Button>
       </div>
 
       <div className="p-4">
-        <div className="relative">
-          <div className="absolute left-0 top-0 h-full w-12 bg-[#0A1929] border-r border-[#1E3A5F] flex flex-col items-center pt-4 text-xs text-[#94A3B8] font-mono">
-            {getLineNumbers()}
+        <div className="grid grid-cols-4 gap-4">
+          {/* Code Editor - Takes 3/4 of the space */}
+          <div className="col-span-3 relative">
+            <div className="absolute left-0 top-0 h-full w-12 bg-[#0A1929] border-r border-[#1E3A5F] flex flex-col items-center pt-4 text-xs text-[#94A3B8] font-mono">
+              {getLineNumbers()}
+            </div>
+            <textarea
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="w-full h-[500px] pl-12 p-4 font-['Consolas'] text-sm bg-[#0A1929] text-white border-0 focus:outline-none focus:ring-0 resize-none"
+              placeholder="  Write your code here..."
+              spellCheck="false"
+            />
           </div>
-          <textarea
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            className="w-full h-[500px] pl-12 p-4 font-['Consolas'] text-sm bg-[#0A1929] text-white border-0 focus:outline-none focus:ring-0 resize-none"
-            placeholder="  Write your code here..."
-            spellCheck="false"
-          />
+          
+          {/* Hints Panel - Takes 1/4 of the space */}
+          <div className="col-span-1 bg-[#0A1929] border border-[#1E3A5F] rounded-lg overflow-hidden flex flex-col">
+            <div className="p-3 border-b border-[#1E3A5F] bg-[#132F4C]">
+              <h3 className="text-white font-medium flex items-center">
+                <LightbulbIcon className="h-4 w-4 mr-2 text-yellow-400" />
+                Hints
+              </h3>
+            </div>
+            <div className="p-3 flex-1 overflow-auto">
+              {hints.length > 0 ? (
+                <ul className="text-white space-y-2 text-sm">
+                  {hints.map((hint, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="text-[#007FFF] mr-2">•</span>
+                      <span>{hint}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-400 text-sm italic">Run your code to get optimization hints</p>
+              )}
+            </div>
+            <div className="p-3 border-t border-[#1E3A5F]">
+              <Button 
+                onClick={onViewOptimizedCode}
+                className="w-full bg-[#007FFF] hover:bg-[#0072E5] text-white text-sm"
+                disabled={!hints.length || loading}
+              >
+                View Optimized Solution
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

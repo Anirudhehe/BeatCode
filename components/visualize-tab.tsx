@@ -1,6 +1,9 @@
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "@/components/ui/chart"
+"use client"
+import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
 import { Separator } from "@/components/ui/separator"
 import { ArrowDown } from "lucide-react"
+import { useEffect, useRef } from "react"
+import { gsap } from "gsap"
 
 interface VisualizeTabProps {
   timeData: {
@@ -32,6 +35,134 @@ export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps
     return percentage.toFixed(0)
   }
 
+  const timeBarRef = useRef<HTMLDivElement>(null)
+  const timeOptimalRef = useRef<HTMLDivElement>(null)
+  const memoryBarRef = useRef<HTMLDivElement>(null)
+  const memoryOptimalRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    // Create a timeline for smoother animations
+    const tl = gsap.timeline()
+
+    // Get the container element
+    const container = document.querySelector('.space-complexity-container')
+    
+    // Initial state
+    tl.set(container, {
+      opacity: 0,
+      y: 20
+    })
+
+    // Fade in animation
+    tl.to(container, {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      ease: "power2.out"
+    })
+
+    // Then animate the memory blocks
+    const currentBlocks = document.querySelectorAll('.memory-block-current')
+    const optimalBlocks = document.querySelectorAll('.memory-block-optimal')
+
+    if (currentBlocks.length > 0) {
+      tl.fromTo(currentBlocks,
+        { scale: 0, opacity: 0 },
+        { 
+          scale: 1,
+          opacity: (index) => {
+            const intensity = index < (memoryData.current / Math.max(memoryData.current, memoryData.optimal) * 100)
+              ? (1 - (index / 100)) * 0.8 + 0.2
+              : 0.1;
+            return intensity;
+          },
+          duration: 0.4,
+          stagger: {
+            amount: 0.3,
+            grid: [10, 10],
+            from: "start"
+          },
+          ease: "back.out(1.2)"
+        },
+        "-=0.2"
+      )
+    }
+
+    if (optimalBlocks.length > 0) {
+      tl.fromTo(optimalBlocks,
+        { scale: 0, opacity: 0 },
+        {
+          scale: 1,
+          opacity: (index) => {
+            const intensity = index < (memoryData.optimal / Math.max(memoryData.current, memoryData.optimal) * 100)
+              ? (1 - (index / 100)) * 0.8 + 0.2
+              : 0.1;
+            return intensity;
+          },
+          duration: 0.4,
+          stagger: {
+            amount: 0.3,
+            grid: [10, 10],
+            from: "start"
+          },
+          ease: "back.out(1.2)"
+        },
+        "-=0.3"
+      )
+    }
+
+    return () => {
+      tl.kill()
+    }
+  }, [memoryData])
+
+  useEffect(() => {
+    // Create a timeline for time complexity animation
+    const tlTime = gsap.timeline({ paused: true })
+    
+    // Get the time complexity container
+    const timeContainer = document.querySelector('.time-complexity-container')
+    
+    // Set initial state
+    tlTime.set(timeContainer, {
+      opacity: 0,
+      y: 20
+    })
+    
+    // Create animation
+    tlTime.to(timeContainer, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: "power2.out"
+    })
+
+    // Create intersection observer
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          // Play animation when element comes into view
+          tlTime.play()
+          // Unobserve after animation starts
+          observer.unobserve(entry.target)
+        }
+      })
+    }, {
+      threshold: 0.2 // Start animation when 20% of the element is visible
+    })
+
+    // Start observing the time complexity container
+    if (timeContainer) {
+      observer.observe(timeContainer)
+    }
+
+    return () => {
+      tlTime.kill()
+      if (timeContainer) {
+        observer.unobserve(timeContainer)
+      }
+    }
+  }, [timeData])
+
   return (
     <div className="bg-[#132F4C] rounded-lg border border-[#1E3A5F] overflow-hidden">
       <div className="p-4 border-b border-[#1E3A5F]">
@@ -39,45 +170,59 @@ export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps
       </div>
 
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-[#0A1929] p-4 rounded-md border border-[#1E3A5F]">
-            <h3 className="text-xs uppercase tracking-wider text-[#94A3B8] mb-3">Time Complexity</h3>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-white">Your solution</span>
-              <div className="flex items-center">
-                <span className="text-white font-mono">{timeData.current}s</span>
-                <span className="ml-2 text-xs bg-[#132F4C] text-[#94A3B8] px-2 py-0.5 rounded">O(n²)</span>
+        <div className="grid grid-cols-1 md:grid-cols- gap-6">
+          <div className="bg-[#0A1929] p-4 rounded-md border border-[#1E3A5F] space-complexity-container">
+            <h3 className="text-xs uppercase tracking-wider text-[#94A3B8] mb-3">SPACE COMPLEXITY</h3>
+            <div className="flex flex-col space-y-8">
+              <div className="flex items-center justify-between">
+                <span className="text-white font-mono">Your solution</span>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-white font-mono">{memoryData.current}MB</span>
+                    <span className="text-xs bg-[#132F4C] text-[#94A3B8] px-2 py-0.5 rounded-sm">O(n)</span>
+                  </div>
+                  <div className="grid grid-cols-10 gap-0.5">
+                    {Array.from({ length: 100 }, (_, i) => {
+                      const intensity = i < (memoryData.current / Math.max(memoryData.current, memoryData.optimal) * 100)
+                        ? (1 - (i / 100)) * 0.8 + 0.2
+                        : 0.1;
+                      return (
+                        <div
+                          key={i}
+                          className="w-2 h-2 rounded-sm memory-block-current"
+                          style={{
+                            backgroundColor: `rgba(0, 127, 255, ${intensity})`
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-white">Optimal solution</span>
-              <div className="flex items-center">
-                <span className="text-white font-mono">{timeData.optimal}s</span>
-                <span className="ml-2 text-xs bg-[#132F4C] text-[#94A3B8] px-2 py-0.5 rounded">O(n)</span>
-              </div>
-            </div>
-            <div className="mt-4 flex items-center justify-center">
-              <div className="flex flex-col items-center">
-                <ArrowDown className="h-4 w-4 text-[#007FFF]" />
-                <span className="text-[#007FFF] font-medium">
-                  {calculateImprovement(timeData.current, timeData.optimal)}% faster
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-[#0A1929] p-4 rounded-md border border-[#1E3A5F]">
-            <h3 className="text-xs uppercase tracking-wider text-[#94A3B8] mb-3">Memory Usage</h3>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-white">Your solution</span>
-              <div className="flex items-center">
-                <span className="text-white font-mono">{memoryData.current}MB</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-white">Optimal solution</span>
-              <div className="flex items-center">
-                <span className="text-white font-mono">{memoryData.optimal}MB</span>
+              <div className="flex items-center justify-between">
+                <span className="text-white font-mono">Optimal solution</span>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-white font-mono">{memoryData.optimal}MB</span>
+                    <span className="text-xs bg-[#132F4C] text-[#94A3B8] px-2 py-0.5 rounded-sm">O(1)</span>
+                  </div>
+                  <div className="grid grid-cols-10 gap-0.5">
+                    {Array.from({ length: 100 }, (_, i) => {
+                      const intensity = i < (memoryData.optimal / Math.max(memoryData.current, memoryData.optimal) * 100)
+                        ? (1 - (i / 100)) * 0.8 + 0.2
+                        : 0.1;
+                      return (
+                        <div
+                          key={i}
+                          className="w-2 h-2 rounded-sm memory-block-optimal"
+                          style={{
+                            backgroundColor: `rgba(0, 200, 83, ${intensity})`
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
             <div className="mt-4 flex items-center justify-center">
@@ -93,24 +238,62 @@ export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps
 
         <Separator className="my-6 bg-[#1E3A5F]" />
 
-        <div className="h-[300px]">
+        <div className="h-[400px] mb-8 time-complexity-container" style={{ opacity: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
+            <LineChart 
+              data={[
+                { size: 0, current: timeData.current * 0.2, optimal: timeData.optimal * 0.2 },
+                { size: 1, current: timeData.current * 0.8, optimal: timeData.optimal * 0.4 },
+                { size: 2, current: timeData.current * 2.0, optimal: timeData.optimal * 0.6 },
+                { size: 3, current: timeData.current * 1.2, optimal: timeData.optimal * 0.8 },
+                { size: 4, current: timeData.current * 1.4, optimal: timeData.optimal * 0.7 },
+                { size: 5, current: timeData.current * 1.3, optimal: timeData.optimal * 0.9 },
+                { size: 6, current: timeData.current * 1.2, optimal: timeData.optimal * 0.85 }
+              ]}
+              margin={{ top: 20, right: 30, left: 50, bottom: 40 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" />
-              <XAxis dataKey="name" stroke="#94A3B8" />
-              <YAxis stroke="#94A3B8" />
+              <XAxis 
+                dataKey="size" 
+                stroke="#94A3B8"
+                label={{ value: 'Input Size (n)', position: 'bottom', fill: '#94A3B8', dy: 25 }}
+              />
+              <YAxis 
+                stroke="#94A3B8"
+                label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fill: '#94A3B8', dx: -10 }}
+                tickFormatter={(value) => `${value.toFixed(1)}s`}
+              />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "#0A1929",
                   borderColor: "#1E3A5F",
                   color: "#FFFFFF",
-                  borderRadius: "4px",
+                  borderRadius: "4px"
                 }}
+                formatter={(value: number) => [`${value.toFixed(2)}s`, 'Time']}
               />
-              <Legend wrapperStyle={{ color: "#94A3B8" }} />
-              <Bar dataKey="Your Code" fill="#007FFF" />
-              <Bar dataKey="Optimal" fill="#00C853" />
-            </BarChart>
+              <Legend 
+                wrapperStyle={{ color: "#94A3B8" }} 
+                verticalAlign="bottom" 
+                height={36}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="current" 
+                name="Your Solution" 
+                stroke="#007FFF" 
+                strokeWidth={2}
+                dot={{ fill: "#007FFF", r: 4 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="optimal" 
+                name="Optimal Solution" 
+                stroke="#00C853" 
+                strokeWidth={2}
+                dot={{ fill: "#00C853", r: 4 }}
+              />
+            </LineChart>
           </ResponsiveContainer>
         </div>
 
@@ -126,3 +309,68 @@ export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps
     </div>
   )
 }
+
+const complexityData = {
+  labels: [0, 10, 20, 30, 40, 50],
+  datasets: [
+    {
+      label: 'O(n)',
+      data: [0, 10, 20, 30, 40, 50],
+      borderColor: '#00C853',
+      tension: 0.4,
+    },
+    {
+      label: 'O(n²)',
+      data: [0, 100, 400, 900, 1600, 2500],
+      borderColor: '#007FFF',
+      tension: 0.4,
+    },
+  ],
+};
+
+const options = {
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    x: {
+      title: {
+        display: true,
+        text: 'Input Size (n)',
+        color: '#94A3B8',
+      },
+      grid: {
+        color: '#1E3A5F',
+      },
+      ticks: {
+        color: '#94A3B8',
+      },
+    },
+    y: {
+      title: {
+        display: true,
+        text: 'Operations',
+        color: '#94A3B8',
+      },
+      grid: {
+        color: '#1E3A5F',
+      },
+      ticks: {
+        color: '#94A3B8',
+      },
+    },
+  },
+  plugins: {
+    legend: {
+      labels: {
+        color: '#94A3B8',
+      },
+    },
+    tooltip: {
+      backgroundColor: '#0A1929',
+      borderColor: '#1E3A5F',
+      titleColor: '#FFFFFF',
+      bodyColor: '#FFFFFF',
+    },
+  },
+};
+
