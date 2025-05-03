@@ -1,0 +1,43 @@
+Steps to Make Visualization Dynamic:
+
+1. Modify compareSolutions Function in gemini.js
+   - Update the prompt to request specific metrics:
+     • Time complexity (Big O notation)
+     • Space complexity (Big O notation)
+     • Actual execution time estimates
+     • Memory usage estimates
+   - Structure the response in a parseable JSON format
+
+2. Create Response Parser
+   - Add a parser function to extract:
+     • Time complexities (O(n), O(1), etc.)
+     • Space complexities
+     • Execution time metrics
+     • Memory usage metrics
+   - Convert text response to structured data
+
+3. Update API Route
+   - Modify /api/compare/route.js to:
+     • Parse the LLM response
+     • Return structured metrics
+     • Include performance data in response
+
+4. Update Editor Page State
+   - Add state handlers for:
+     • Time complexity data
+     • Space complexity data
+     • Performance metrics
+   - Update timeData and memoryData based on API response
+
+5. Enhance VisualizeTab Component
+   - Make visualization components respond to:
+     • Dynamic complexity values
+     • Real performance metrics
+     • Comparative analysis data
+   - Update chart scales automatically
+
+6. Error Handling & Fallbacks
+   - Add validation for LLM response format
+   - Provide default values if metrics are missing
+   - Show error states in visualization
+   - Graceful degradation for incomplete data
