@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Header from "@/components/header"
 import TabNavigation from "@/components/tab-navigation"
 import EditorTab from "@/components/editor-tab"
@@ -13,6 +13,7 @@ export default function EditorPage() {
   const [language, setLanguage] = useState("python")
   const [output, setOutput] = useState("")
   const [optimizedCode, setOptimizedCode] = useState("")
+  const [hints, setHints] = useState([])
   const [timeData, setTimeData] = useState({ current: 0.2, optimal: 0.04 })
   const [memoryData, setMemoryData] = useState({ current: 5.2, optimal: 2.1 })
   const [loading, setLoading] = useState(false)
@@ -25,54 +26,86 @@ export default function EditorPage() {
     }
 
     setLoading(true);
+    setHints([]);
     
     try {
-      console.log("Sending request with:", { code, language });
-      
-      // Call the optimize API endpoint
-      const response = await fetch('/api/optimize', {
+      // Call the hints API endpoint
+      const response = await fetch('/api/hints', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, language }),
       });
       
-      console.log("Response status:", response.status);
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-      
       // Log the raw response text for debugging
       const responseText = await response.text();
-      console.log("Raw response:", responseText);
       
       // Try to parse as JSON
       let data;
       try {
         data = JSON.parse(responseText);
-        console.log("Parsed data:", data);
       } catch (parseError) {
         console.error("Failed to parse response as JSON:", parseError);
         throw new Error("Server returned invalid JSON response");
       }
       
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to optimize code');
+        throw new Error(data.error || 'Failed to get hints');
       }
       
-      // Set the optimized code from the API response
-      console.log("Setting optimized code:", data.result);
-      setOptimizedCode(data.result);
+      // Extract hints from the response
+      const result = data.result;
       
-      // Switch to results tab to show the comparison
-      setActiveTab("results");
+      // Simple parsing to extract bullet points as hints
+      const hintMatches = result.match(/•(.*?)(?=•|$)/gs) || [];
+      const extractedHints = hintMatches.map(hint => hint.replace(/•\s*/, '').trim());
       
-    } catch (err) {
-      console.error("Error optimizing code:", err);
-      alert(err.message || "Failed to optimize code. Please try again.");
+      if (extractedHints.length > 0) {
+        setHints(extractedHints);
+      } else {
+        // If no bullet points found, try to split by lines
+        const lines = result.split('\n').filter(line => line.trim());
+        setHints(lines);
+      }
+      
+    } catch (error) {
+      console.error("Error getting hints:", error);
+      alert(error.message || "Failed to get hints. Please try again.");
     } finally {
       setLoading(false);
     }
   }
 
-  // In your EditorPage component
+  const handleViewOptimizedCode = async () => {
+    setLoading(true);
+    
+    try {
+      // Call the optimize API endpoint to get the full solution
+      const response = await fetch('/api/optimize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, language }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to optimize code');
+      }
+      
+      // Set the optimized code from the API response
+      setOptimizedCode(data.result);
+      
+      // Switch to results tab to show the comparison
+      setActiveTab("results");
+      
+    } catch (error) {
+      console.error("Error optimizing code:", error);
+      alert(error.message || "Failed to optimize code. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#0A1929] flex flex-col">
       <div className="container mx-auto px-6 py-8 flex-1 flex flex-col max-w-7xl">
@@ -90,11 +123,19 @@ export default function EditorPage() {
               language={language}
               setLanguage={setLanguage}
               onRunCode={handleRunCode}
-              loading={loading} // Pass the loading state
+              loading={loading}
+              hints={hints}
+              onViewOptimizedCode={handleViewOptimizedCode}
             />
           )}
 
-          {activeTab === "results" && <ResultsTab output={output} optimizedCode={optimizedCode} originalCode={code} />}
+          {activeTab === "results" && (
+            <ResultsTab 
+              output={output} 
+              optimizedCode={optimizedCode} 
+              originalCode={code}
+            />
+          )}
 
           {activeTab === "visualize" && <VisualizeTab timeData={timeData} memoryData={memoryData} />}
         </div>

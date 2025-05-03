@@ -62,3 +62,29 @@ export const compareSolutions = async(userCode,language,optimalSolution)=>{
     throw error; 
   }
 };
+
+export const hints = async(userCode, language) => {
+  try {
+    const genAI = initializeGeminiAPI();
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+
+    const prompt = `I have a ${language} solution that i believe is solving a DSA/ leetcode problem:
+    ${userCode}
+    Please:
+    1. Identify what problem this code is likely trying to solve in one line.(eg:" I see you're trying to solve __ problem").
+    2. Give me 3 hints to make it more optimized based on my code.
+    3. Format your response with bullet points (•)  whith no *and # for each hint .
+    4. Keep each hints SHORT and CONSIZE and focused on a specific improvement.
+    5.(each hint shouldn't be more than 10 words).
+    6. Let the last bullet point be "Use these hints and try again!"`
+    ;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    return text;
+  } catch(error) {
+    console.error("Error in generating hints:", error);
+    throw error;
+  }
+};
