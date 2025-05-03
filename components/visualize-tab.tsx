@@ -39,6 +39,82 @@ export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps
   const timeOptimalRef = useRef<HTMLDivElement>(null)
   const memoryBarRef = useRef<HTMLDivElement>(null)
   const memoryOptimalRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    // Create a timeline for smoother animations
+    const tl = gsap.timeline()
+
+    // Get the container element
+    const container = document.querySelector('.space-complexity-container')
+    
+    // Initial state
+    tl.set(container, {
+      opacity: 0,
+      y: 20
+    })
+
+    // Fade in animation
+    tl.to(container, {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      ease: "power2.out"
+    })
+
+    // Then animate the memory blocks
+    const currentBlocks = document.querySelectorAll('.memory-block-current')
+    const optimalBlocks = document.querySelectorAll('.memory-block-optimal')
+
+    if (currentBlocks.length > 0) {
+      tl.fromTo(currentBlocks,
+        { scale: 0, opacity: 0 },
+        { 
+          scale: 1,
+          opacity: (index) => {
+            const intensity = index < (memoryData.current / Math.max(memoryData.current, memoryData.optimal) * 100)
+              ? (1 - (index / 100)) * 0.8 + 0.2
+              : 0.1;
+            return intensity;
+          },
+          duration: 0.4,
+          stagger: {
+            amount: 0.3,
+            grid: [10, 10],
+            from: "start"
+          },
+          ease: "back.out(1.2)"
+        },
+        "-=0.2"
+      )
+    }
+
+    if (optimalBlocks.length > 0) {
+      tl.fromTo(optimalBlocks,
+        { scale: 0, opacity: 0 },
+        {
+          scale: 1,
+          opacity: (index) => {
+            const intensity = index < (memoryData.optimal / Math.max(memoryData.current, memoryData.optimal) * 100)
+              ? (1 - (index / 100)) * 0.8 + 0.2
+              : 0.1;
+            return intensity;
+          },
+          duration: 0.4,
+          stagger: {
+            amount: 0.3,
+            grid: [10, 10],
+            from: "start"
+          },
+          ease: "back.out(1.2)"
+        },
+        "-=0.3"
+      )
+    }
+
+    return () => {
+      tl.kill()
+    }
+  }, [memoryData])
+
   return (
     <div className="bg-[#132F4C] rounded-lg border border-[#1E3A5F] overflow-hidden">
       <div className="p-4 border-b border-[#1E3A5F]">
@@ -47,7 +123,7 @@ export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps
 
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols- gap-6">
-          <div className="bg-[#0A1929] p-4 rounded-md border border-[#1E3A5F]">
+          <div className="bg-[#0A1929] p-4 rounded-md border border-[#1E3A5F] space-complexity-container">
             <h3 className="text-xs uppercase tracking-wider text-[#94A3B8] mb-3">SPACE COMPLEXITY</h3>
             <div className="flex flex-col space-y-8">
               <div className="flex items-center justify-between">
