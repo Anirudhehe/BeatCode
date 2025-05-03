@@ -60,20 +60,26 @@ export default function EditorPage() {
       const result = data.result;
       
       // Simple parsing to extract bullet points as hints
-      const hintMatches = result.match(/•(.*?)(?=•|$)/gs) || [];
-      const extractedHints = hintMatches.map(hint => hint.replace(/•\s*/, '').trim());
+      const hintMatches = result.match(/•(.*?)(?=•|$)/g) || [];
+      const extractedHints = hintMatches.map((hint: string) => hint.replace(/•\s*/, '').trim());
       
       if (extractedHints.length > 0) {
         setHints(extractedHints);
       } else {
+
         // If no bullet points found, try to split by lines
-        const lines = result.split('\n').filter(line => line.trim());
+        const lines = result.split('\n').filter((line: string) => line.trim());
         setHints(lines);
       }
       
     } catch (error) {
+
       console.error("Error getting hints:", error);
-      alert(error.message || "Failed to get hints. Please try again.");
+      if (error instanceof Error) {
+        alert(error.message || "Failed to get hints. Please try again.");
+      } else {
+        alert("Failed to get hints. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -104,7 +110,11 @@ export default function EditorPage() {
       
     } catch (error) {
       console.error("Error optimizing code:", error);
-      alert(error.message || "Failed to optimize code. Please try again.");
+      if (error instanceof Error) {
+        alert(error.message || "Failed to optimize code. Please try again.");
+      } else {
+        alert("Failed to optimize code. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
