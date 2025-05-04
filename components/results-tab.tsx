@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input"
 import { useSession } from "next-auth/react"
 import { saveUserSolution } from "@/lib/firestore"
-import { toast } from "sonner" 
+import { toast } from "sonner"
+import VisualizeTab from "./visualize-tab"
 
 interface ResultsTabProps {
   output: string;
@@ -15,10 +16,20 @@ interface ResultsTabProps {
 }
 
 export default function ResultsTab({ output, optimizedCode, originalCode }: ResultsTabProps) {
+  const [showVisualization, setShowVisualization] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [problemName, setProblemName] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const { data: session } = useSession()
+
+  const handleVisualize = () => {
+    // Store the code in localStorage before navigating
+    localStorage.setItem('originalCode', originalCode)
+    localStorage.setItem('optimizedCode', optimizedCode)
+    localStorage.setItem('language', 'python') // Or get this from props
+    
+    setShowVisualization(true)
+  }
 
   const handleSave = async () => {
     if (!problemName.trim()) {
@@ -48,6 +59,20 @@ export default function ResultsTab({ output, optimizedCode, originalCode }: Resu
     } finally {
       setIsSaving(false)
     }
+  }
+
+  if (showVisualization) {
+    return (
+      <div>
+        <button 
+          onClick={() => setShowVisualization(false)} 
+          className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
+        >
+          Back to Results
+        </button>
+        <VisualizeTab />
+      </div>
+    )
   }
 
   return (
@@ -102,6 +127,16 @@ export default function ResultsTab({ output, optimizedCode, originalCode }: Resu
             </div>
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Visualize Button */}
+      <div className="col-span-2 flex justify-center mt-4">
+        <button 
+          onClick={handleVisualize} 
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Visualize
+        </button>
       </div>
     </div>
   )

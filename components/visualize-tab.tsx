@@ -1,376 +1,295 @@
 "use client"
-import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
-import { Separator } from "@/components/ui/separator"
-import { ArrowDown } from "lucide-react"
-import { useEffect, useRef } from "react"
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { useEffect, useState } from "react"
 import { gsap } from "gsap"
 
 interface VisualizeTabProps {
-  timeData: {
-    current: number
-    optimal: number
-  }
-  memoryData: {
-    current: number
-    optimal: number
-  }
+  timeData?: { current: number, optimal: number };
+  memoryData?: { current: number, optimal: number };
 }
 
-export default function VisualizeTab({ timeData, memoryData }: VisualizeTabProps) {
-  const chartData = [
-    {
-      name: "Time (s)",
-      "Your Code": timeData.current,
-      Optimal: timeData.optimal,
-    },
-    {
-      name: "Memory (MB)",
-      "Your Code": memoryData.current,
-      Optimal: memoryData.optimal,
-    },
-  ]
+export default function VisualizeTab({ timeData: initialTimeData, memoryData }: VisualizeTabProps) {
+  const [complexityInfo, setComplexityInfo] = useState({
+    currentTime: "O(n²)",
+    optimalTime: "O(n)",
+    analysis: "Your solution uses a nested loop approach with O(n²) time complexity. The optimal solution uses a hashmap to achieve O(1) lookups, resulting in O(n) overall time complexity."
+  })
+  const [loading, setLoading] = useState(true)
+  const [timeData, setTimeData] = useState(initialTimeData || { current: 0.2, optimal: 0.04 })
 
-  const calculateImprovement = (current: number, optimal: number) => {
-    const percentage = ((current - optimal) / current) * 100
-    return percentage.toFixed(0)
+  useEffect(() => {
+    console.log("VisualizeTab mounted, fetching complexity data...");
+    fetchComplexityData();
+  }, []);
+
+  const fetchComplexityData = async () => {
+    try {
+      console.log("Fetching complexity data from API...");
+      
+      // Get the code from localStorage
+      const originalCode = localStorage.getItem('originalCode');
+      const optimizedCode = localStorage.getItem('optimizedCode');
+      const language = localStorage.getItem('language') || 'python';
+      
+      if (!originalCode || !optimizedCode) {
+        console.log("No code found in localStorage, using default values");
+        setLoading(false);
+        return;
+      }
+      
+      const response = await fetch('/api/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          originalCode, 
+          optimizedCode, 
+          language 
+        }),
+      });
+      
+      const responseText = await response.text();
+      
+      try {
+        const data = JSON.parse(responseText);
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to compare solutions');
+        }
+        
+        console.log("Raw API response:", data.result);
+        processApiResponse(data.result);
+      } catch (parseError) {
+        console.error("Failed to parse response as JSON:", parseError);
+        throw new Error("Server returned invalid JSON response");
+      }
+    } catch (error) {
+      console.error("Error fetching complexity data:", error);
+      // Use mock data as fallback
+      console.log("Using mock data as fallback");
+      const mockResponse = "1. O(n²) 2. O(n)";
+      processApiResponse(mockResponse);
+    }
+  };
+
+  const processApiResponse = (response: string) => {
+    try {
+      console.log("Processing API response text:", response);
+      
+      // Simpler regex patterns specifically for the "1. O(n^2)" and "2. O(n)" format
+      const originalComplexityMatch = response.match(/1\.\s*(O\([^)]+\))/i);
+      const optimizedComplexityMatch = response.match(/2\.\s*(O\([^)]+\))/i);
+      
+      console.log("Regex matches:", { 
+        originalMatch: originalComplexityMatch, 
+        optimizedMatch: optimizedComplexityMatch 
+      });
+      
+      // Extract the matched values or use defaults
+      const originalComplexity = originalComplexityMatch ? originalComplexityMatch[1] : "O(n²)";
+      const optimizedComplexity = optimizedComplexityMatch ? optimizedComplexityMatch[1] : "O(n)";
+      
+      console.log("Extracted time complexities:", {
+        original: originalComplexity,
+        optimized: optimizedComplexity
+      });
+      
+      setComplexityInfo({
+        currentTime: originalComplexity,
+        optimalTime: optimizedComplexity,
+        analysis: `Your solution has ${originalComplexity} time complexity. The optimized solution improves this to ${optimizedComplexity} time complexity.`
+      });
+      
+      updateVisualizationData(originalComplexity, optimizedComplexity);
+    } catch (error) {
+      console.error("Error processing API response:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateVisualizationData = (originalComplexity: string, optimizedComplexity: string) => {
+    console.log("Updating visualization data for:", { originalComplexity, optimizedComplexity });
+    
+    const getTimeValue = (complexity: string) => {
+      const notation = complexity.toLowerCase()
+      if (notation.includes('1)')) return 0.1
+      if (notation.includes('log')) return 0.3
+      if (notation.includes('n)')) return 0.5
+      if (notation.includes('n log')) return 0.7
+      if (notation.includes('n²') || notation.includes('n^2')) return 1.0
+      if (notation.includes('n³') || notation.includes('n^3')) return 1.5
+      if (notation.includes('2^n')) return 2.0
+      return 0.8
+    }
+
+    const currentTimeFactor = getTimeValue(originalComplexity);
+    const optimalTimeFactor = getTimeValue(optimizedComplexity);
+
+    console.log("Time factors calculated:", { currentTimeFactor, optimalTimeFactor });
+
+    setTimeData({
+      current: parseFloat((0.2 + currentTimeFactor * 0.8).toFixed(2)),
+      optimal: parseFloat((0.04 + optimalTimeFactor * 0.16).toFixed(2))
+    });
   }
 
-  const timeBarRef = useRef<HTMLDivElement>(null)
-  const timeOptimalRef = useRef<HTMLDivElement>(null)
-  const memoryBarRef = useRef<HTMLDivElement>(null)
-  const memoryOptimalRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    // Create a timeline for smoother animations
-    const tl = gsap.timeline()
+    const tl = gsap.timeline({ paused: true })
+    const container = document.querySelector('.time-complexity-container')
 
-    // Get the container element
-    const container = document.querySelector('.space-complexity-container')
-    
-    // Initial state
-    tl.set(container, {
-      opacity: 0,
-      y: 20
-    })
+    if (container) {
+      tl.set(container, { opacity: 0, y: 20 })
+      tl.to(container, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" })
 
-    // Fade in animation
-    tl.to(container, {
-      opacity: 1,
-      y: 0,
-      duration: 0.6,
-      ease: "power2.out"
-    })
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            tl.play()
+            observer.unobserve(entry.target)
+          }
+        })
+      }, { threshold: 0.2 })
 
-    // Then animate the memory blocks
-    const currentBlocks = document.querySelectorAll('.memory-block-current')
-    const optimalBlocks = document.querySelectorAll('.memory-block-optimal')
+      observer.observe(container)
 
-    if (currentBlocks.length > 0) {
-      tl.fromTo(currentBlocks,
-        { scale: 0, opacity: 0 },
-        { 
-          scale: 1,
-          opacity: (index) => {
-            const intensity = index < (memoryData.current / Math.max(memoryData.current, memoryData.optimal) * 100)
-              ? (1 - (index / 100)) * 0.8 + 0.2
-              : 0.1;
-            return intensity;
-          },
-          duration: 0.4,
-          stagger: {
-            amount: 0.3,
-            grid: [10, 10],
-            from: "start"
-          },
-          ease: "back.out(1.2)"
-        },
-        "-=0.2"
-      )
-    }
-
-    if (optimalBlocks.length > 0) {
-      tl.fromTo(optimalBlocks,
-        { scale: 0, opacity: 0 },
-        {
-          scale: 1,
-          opacity: (index) => {
-            const intensity = index < (memoryData.optimal / Math.max(memoryData.current, memoryData.optimal) * 100)
-              ? (1 - (index / 100)) * 0.8 + 0.2
-              : 0.1;
-            return intensity;
-          },
-          duration: 0.4,
-          stagger: {
-            amount: 0.3,
-            grid: [10, 10],
-            from: "start"
-          },
-          ease: "back.out(1.2)"
-        },
-        "-=0.3"
-      )
-    }
-
-    return () => {
-      tl.kill()
-    }
-  }, [memoryData])
-
-  useEffect(() => {
-    // Create a timeline for time complexity animation
-    const tlTime = gsap.timeline({ paused: true })
-    
-    // Get the time complexity container
-    const timeContainer = document.querySelector('.time-complexity-container')
-    
-    // Set initial state
-    tlTime.set(timeContainer, {
-      opacity: 0,
-      y: 20
-    })
-    
-    // Create animation
-    tlTime.to(timeContainer, {
-      opacity: 1,
-      y: 0,
-      duration: 0.8,
-      ease: "power2.out"
-    })
-
-    // Create intersection observer
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          // Play animation when element comes into view
-          tlTime.play()
-          // Unobserve after animation starts
-          observer.unobserve(entry.target)
-        }
-      })
-    }, {
-      threshold: 0.2 // Start animation when 20% of the element is visible
-    })
-
-    // Start observing the time complexity container
-    if (timeContainer) {
-      observer.observe(timeContainer)
-    }
-
-    return () => {
-      tlTime.kill()
-      if (timeContainer) {
-        observer.unobserve(timeContainer)
+      return () => {
+        observer.disconnect()
+        tl.kill()
       }
     }
-  }, [timeData])
+  }, []);
+
+  // Generate data points for the line chart
+  const generateChartData = (originalComplexity, optimizedComplexity) => {
+    const data = [];
+    
+    // Generate data points for different input sizes
+    for (let n = 0; n <= 6; n++) {
+      let yourTime, optimalTime;
+      
+      // Calculate time based on complexity
+      if (originalComplexity.includes('n²') || originalComplexity.includes('n^2')) {
+        yourTime = 0.08 + (n * n * 0.01);
+      } else if (originalComplexity.includes('n log')) {
+        yourTime = 0.08 + (n * Math.log(n) * 0.02);
+      } else if (originalComplexity.includes('n)')) {
+        yourTime = 0.08 + (n * 0.04);
+      } else {
+        yourTime = 0.08 + (n * 0.04);
+      }
+      
+      if (optimizedComplexity.includes('1)')) {
+        optimalTime = 0.03;
+      } else if (optimizedComplexity.includes('log')) {
+        optimalTime = 0.03 + (Math.log(n) * 0.005);
+      } else if (optimizedComplexity.includes('n)')) {
+        optimalTime = 0.03 + (n * 0.005);
+      } else {
+        optimalTime = 0.03 + (n * 0.005);
+      }
+      
+      data.push({
+        n,
+        "Your Solution": parseFloat(yourTime.toFixed(2)),
+        "Optimal Solution": parseFloat(optimalTime.toFixed(2))
+      });
+    }
+    
+    return data;
+  };
+
+  // Generate chart data based on complexity info
+  const chartData = generateChartData(complexityInfo.currentTime, complexityInfo.optimalTime);
+
+  useEffect(() => {
+    const tl = gsap.timeline({ paused: true })
+    const container = document.querySelector('.time-complexity-container')
+
+    if (container) {
+      tl.set(container, { opacity: 0, y: 20 })
+      tl.to(container, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" })
+
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            tl.play()
+            observer.unobserve(entry.target)
+          }
+        })
+      }, { threshold: 0.2 })
+
+      observer.observe(container)
+
+      return () => {
+        observer.disconnect()
+        tl.kill()
+      }
+    }
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-[#132F4C] rounded-lg border border-[#1E3A5F] p-8 flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#007FFF] mb-4"></div>
+          <p className="text-white">Analyzing code complexity...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-[#132F4C] rounded-lg border border-[#1E3A5F] overflow-hidden">
       <div className="p-4 border-b border-[#1E3A5F]">
-        <h2 className="text-sm font-medium text-white">Performance Analysis</h2>
+        <h2 className="text-sm font-medium text-white">Time Complexity Analysis</h2>
       </div>
 
-      <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols- gap-6">
-          <div className="bg-[#0A1929] p-4 rounded-md border border-[#1E3A5F] space-complexity-container">
-            <h3 className="text-xs uppercase tracking-wider text-[#94A3B8] mb-3">SPACE COMPLEXITY</h3>
-            <div className="flex flex-col space-y-8">
-              <div className="flex items-center justify-between">
-                <span className="text-white font-mono">Your solution</span>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-white font-mono">{memoryData.current}MB</span>
-                    <span className="text-xs bg-[#132F4C] text-[#94A3B8] px-2 py-0.5 rounded-sm">O(n)</span>
-                  </div>
-                  <div className="grid grid-cols-10 gap-0.5">
-                    {Array.from({ length: 100 }, (_, i) => {
-                      const intensity = i < (memoryData.current / Math.max(memoryData.current, memoryData.optimal) * 100)
-                        ? (1 - (i / 100)) * 0.8 + 0.2
-                        : 0.1;
-                      return (
-                        <div
-                          key={i}
-                          className="w-2 h-2 rounded-sm memory-block-current"
-                          style={{
-                            backgroundColor: `rgba(0, 127, 255, ${intensity})`
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-white font-mono">Optimal solution</span>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-white font-mono">{memoryData.optimal}MB</span>
-                    <span className="text-xs bg-[#132F4C] text-[#94A3B8] px-2 py-0.5 rounded-sm">O(1)</span>
-                  </div>
-                  <div className="grid grid-cols-10 gap-0.5">
-                    {Array.from({ length: 100 }, (_, i) => {
-                      const intensity = i < (memoryData.optimal / Math.max(memoryData.current, memoryData.optimal) * 100)
-                        ? (1 - (i / 100)) * 0.8 + 0.2
-                        : 0.1;
-                      return (
-                        <div
-                          key={i}
-                          className="w-2 h-2 rounded-sm memory-block-optimal"
-                          style={{
-                            backgroundColor: `rgba(0, 200, 83, ${intensity})`
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 flex items-center justify-center">
-              <div className="flex flex-col items-center">
-                <ArrowDown className="h-4 w-4 text-[#007FFF]" />
-                <span className="text-[#007FFF] font-medium">
-                  {calculateImprovement(memoryData.current, memoryData.optimal)}% less memory
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="p-6 space-y-6 time-complexity-container">
+        <p className="text-[#94A3B8] text-sm">{complexityInfo.analysis}</p>
 
-        <Separator className="my-6 bg-[#1E3A5F]" />
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" />
+            <XAxis 
+              dataKey="n" 
+              stroke="#94A3B8" 
+              label={{ value: 'Input Size (n)', position: 'insideBottom', offset: -5, fill: '#94A3B8' }} 
+            />
+            <YAxis 
+              stroke="#94A3B8" 
+              label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fill: '#94A3B8' }}
+            />
+            <Tooltip 
+              contentStyle={{ backgroundColor: '#1E3A5F', border: 'none', borderRadius: '4px' }}
+              labelStyle={{ color: 'white' }}
+              formatter={(value, name) => [`Time : ${value}s`, name]}
+            />
+            <Legend wrapperStyle={{ color: '#94A3B8' }} />
+            <Line 
+              type="monotone" 
+              dataKey="Your Solution" 
+              stroke="#007FFF" 
+              strokeWidth={2} 
+              dot={{ fill: '#007FFF', r: 4 }} 
+              activeDot={{ r: 6 }} 
+            />
+            <Line 
+              type="monotone" 
+              dataKey="Optimal Solution" 
+              stroke="#22C55E" 
+              strokeWidth={2} 
+              dot={{ fill: '#22C55E', r: 4 }} 
+              activeDot={{ r: 6 }} 
+            />
+          </LineChart>
+        </ResponsiveContainer>
 
-        <div className="h-[400px] mb-8 time-complexity-container" style={{ opacity: 0 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart 
-              data={[
-                { size: 0, current: timeData.current * 0.2, optimal: timeData.optimal * 0.2 },
-                { size: 1, current: timeData.current * 0.8, optimal: timeData.optimal * 0.4 },
-                { size: 2, current: timeData.current * 2.0, optimal: timeData.optimal * 0.6 },
-                { size: 3, current: timeData.current * 1.2, optimal: timeData.optimal * 0.8 },
-                { size: 4, current: timeData.current * 1.4, optimal: timeData.optimal * 0.7 },
-                { size: 5, current: timeData.current * 1.3, optimal: timeData.optimal * 0.9 },
-                { size: 6, current: timeData.current * 1.2, optimal: timeData.optimal * 0.85 }
-              ]}
-              margin={{ top: 20, right: 30, left: 50, bottom: 40 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" />
-              <XAxis 
-                dataKey="size" 
-                stroke="#94A3B8"
-                label={{ value: 'Input Size (n)', position: 'bottom', fill: '#94A3B8', dy: 25 }}
-              />
-              <YAxis 
-                stroke="#94A3B8"
-                label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fill: '#94A3B8', dx: -10 }}
-                tickFormatter={(value) => `${value.toFixed(1)}s`}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0A1929",
-                  borderColor: "#1E3A5F",
-                  color: "#FFFFFF",
-                  borderRadius: "4px"
-                }}
-                formatter={(value: number) => [`${value.toFixed(2)}s`, 'Time']}
-              />
-              <Legend 
-                wrapperStyle={{ color: "#94A3B8" }} 
-                verticalAlign="bottom" 
-                height={36}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="current" 
-                name="Your Solution" 
-                stroke="#007FFF" 
-                strokeWidth={2}
-                dot={{ fill: "#007FFF", r: 4 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="optimal" 
-                name="Optimal Solution" 
-                stroke="#00C853" 
-                strokeWidth={2}
-                dot={{ fill: "#00C853", r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="mt-6 p-4 bg-[#0A1929] rounded-md border border-[#1E3A5F]">
-          <h3 className="text-xs uppercase tracking-wider text-[#94A3B8] mb-2">Analysis</h3>
-          <p className="text-sm text-white">
-            Your solution uses a nested loop approach with O(n²) time complexity. The optimal solution uses a hashmap to
-            achieve O(1) lookups, resulting in O(n) overall time complexity. This optimization reduces execution time by
-            approximately 80%.
-          </p>
+        <div className="flex justify-between text-xs text-white mt-2">
+          <span>Your Code: {complexityInfo.currentTime}</span>
+          <span>Optimal Code: {complexityInfo.optimalTime}</span>
         </div>
       </div>
     </div>
   )
 }
 
-const complexityData = {
-  labels: [0, 10, 20, 30, 40, 50],
-  datasets: [
-    {
-      label: 'O(n)',
-      data: [0, 10, 20, 30, 40, 50],
-      borderColor: '#00C853',
-      tension: 0.4,
-    },
-    {
-      label: 'O(n²)',
-      data: [0, 100, 400, 900, 1600, 2500],
-      borderColor: '#007FFF',
-      tension: 0.4,
-    },
-  ],
-};
-
-const options = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    x: {
-      title: {
-        display: true,
-        text: 'Input Size (n)',
-        color: '#94A3B8',
-      },
-      grid: {
-        color: '#1E3A5F',
-      },
-      ticks: {
-        color: '#94A3B8',
-      },
-    },
-    y: {
-      title: {
-        display: true,
-        text: 'Operations',
-        color: '#94A3B8',
-      },
-      grid: {
-        color: '#1E3A5F',
-      },
-      ticks: {
-        color: '#94A3B8',
-      },
-    },
-  },
-  plugins: {
-    legend: {
-      labels: {
-        color: '#94A3B8',
-      },
-    },
-    tooltip: {
-      backgroundColor: '#0A1929',
-      borderColor: '#1E3A5F',
-      titleColor: '#FFFFFF',
-      bodyColor: '#FFFFFF',
-    },
-  },
-};
 
