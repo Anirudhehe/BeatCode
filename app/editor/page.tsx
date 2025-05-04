@@ -153,30 +153,40 @@ export default function EditorPage() {
   return (
     <main className="min-h-screen bg-[#0A1929] flex flex-col relative">
       {sidebarOpen && (
-        <div className="fixed top-0 left-0 w-64 h-full bg-[#1E293B] text-white shadow-lg z-50 p-4">
-          <div className="flex justify-between items-center mb-4">
-            <button onClick={() => setSidebarOpen(false)}>
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <ul className="space-y-2 overflow-y-auto max-h-[80vh] pr-1">
-            {userSolutions.length === 0 && <li className="text-sm text-gray-400">No saved problems.</li>}
-            {userSolutions.map((solution) => (
-              <li
-                key={solution.id}
-                className="bg-[#334155] hover:bg-[#475569] p-2 rounded cursor-pointer"
-                onClick={() => {
-                  setCode(solution.solution || "")
-                  setOptimizedCode(solution.optimizedSolution || "")
-                  setActiveTab("editor")
-                  setSidebarOpen(false)
-                }}
+        <>
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <div className="fixed top-0 left-0 w-64 h-full bg-[#1E293B] text-white shadow-lg z-50 p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="font-semibold">Saved Solutions</h2>
+              <button 
+                onClick={() => setSidebarOpen(false)}
+                className="hover:bg-[#334155] p-1 rounded-md transition-colors"
               >
-                {solution.title || "Untitled Problem"}
-              </li>
-            ))}
-          </ul>
-        </div>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <ul className="space-y-2 overflow-y-auto max-h-[80vh] pr-1">
+              {userSolutions.length === 0 && <li className="text-sm text-gray-400">No saved problems.</li>}
+              {userSolutions.map((solution) => (
+                <li
+                  key={solution.id}
+                  className="bg-[#334155] hover:bg-[#475569] p-2 rounded cursor-pointer"
+                  onClick={() => {
+                    setCode(solution.solution || "")
+                    setOptimizedCode(solution.optimizedSolution || "")
+                    setActiveTab("editor")
+                    setSidebarOpen(false)
+                  }}
+                >
+                  {solution.title || "Untitled Problem"}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
       )}
 
       <button
