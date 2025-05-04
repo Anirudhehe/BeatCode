@@ -123,8 +123,8 @@ export default function VisualizeTab({ timeData: initialTimeData, memoryData }: 
       return 0.8
     }
 
-    const currentTimeFactor = getTimeValue(originalComplexity);
-    const optimalTimeFactor = getTimeValue(optimizedComplexity);
+    const currentTimeFactor = getTimeValue(originalTimeComplexity);
+    const optimalTimeFactor = getTimeValue(optimizedTimeComplexity);
 
     console.log("Time factors calculated:", { currentTimeFactor, optimalTimeFactor });
 

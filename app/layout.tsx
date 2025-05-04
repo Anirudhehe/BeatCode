@@ -1,7 +1,15 @@
 import type React from "react"
 import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { NextAuthProvider } from "./providers" // Import the NextAuthProvider
+import { NextAuthProvider } from "./providers"
+
+export const metadata = {
+  title: 'BeatCode',
+  icons: {
+    icon: '/favicon.ico',
+  },
+  generator: 'v0.dev'
+}
 
 export default function RootLayout({
   children,
@@ -20,7 +28,3 @@ export default function RootLayout({
     </html>
   )
 }
-
-export const metadata = {
-  generator: 'v0.dev'
-};
