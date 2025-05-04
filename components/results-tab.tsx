@@ -120,10 +120,10 @@ export default function ResultsTab({ output, optimizedCode, originalCode }: Resu
               className="mt-2"
             />
             <div className="flex justify-end gap-2 mt-4">
-              <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleSave} disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save"}
-              </Button>
+            <Button variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
             </div>
           </DialogContent>
         </Dialog>
