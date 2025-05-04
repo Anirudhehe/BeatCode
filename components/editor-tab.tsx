@@ -1,9 +1,9 @@
 "use client"
-
 import { useState } from "react"
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
+import Editor from '@monaco-editor/react'
+import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Play, Loader2, LightbulbIcon } from "lucide-react"
+import { Loader2, Play, Lightbulb as LightbulbIcon } from "lucide-react"
 
 interface EditorTabProps {
   code: string
@@ -16,11 +16,11 @@ interface EditorTabProps {
   onViewOptimizedCode?: () => void
 }
 
-export default function EditorTab({ 
-  code, 
-  setCode, 
-  language, 
-  setLanguage, 
+export default function EditorTab({
+  code,
+  setCode,
+  language,
+  setLanguage,
   onRunCode,
   loading = false,
   hints = [],
@@ -92,17 +92,21 @@ export default function EditorTab({
 
       <div className="p-4">
         <div className="grid grid-cols-4 gap-4">
-          {/* Code Editor - Takes 3/4 of the space */}
-          <div className="col-span-3 relative">
-            <div className="absolute left-0 top-0 h-full w-12 bg-[#0A1929] border-r border-[#1E3A5F] flex flex-col items-center pt-4 text-xs text-[#94A3B8] font-mono">
-              {getLineNumbers()}
-            </div>
-            <textarea
+          <div className="col-span-3 relative h-[500px]">
+            <Editor
+              height="100%"
+              language={language}
+              theme="vs-dark"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full h-[500px] pl-12 p-4 font-['Consolas'] text-sm bg-[#0A1929] text-white border-0 focus:outline-none focus:ring-0 resize-none"
-              placeholder="  Write your code here..."
-              spellCheck="false"
+              onChange={(value) => setCode(value || '')}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: 'Consolas, monospace',
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+              }}
             />
           </div>
           
