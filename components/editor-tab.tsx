@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Play, Loader2, LightbulbIcon } from "lucide-react"
+import { Play, Loader2, LightbulbIcon, Clock } from "lucide-react"
 
 interface EditorTabProps {
   code: string
@@ -14,6 +14,9 @@ interface EditorTabProps {
   loading?: boolean
   hints?: string[]
   onViewOptimizedCode?: () => void
+  timerActive?: boolean;
+  timeRemaining?: string;
+  solutionUnlocked?: boolean;
 }
 
 export default function EditorTab({ 
@@ -21,10 +24,13 @@ export default function EditorTab({
   setCode, 
   language, 
   setLanguage, 
-  onRunCode,
-  loading = false,
-  hints = [],
-  onViewOptimizedCode
+  onRunCode, 
+  loading, 
+  hints = [], 
+  onViewOptimizedCode,
+  timerActive = false,
+  timeRemaining = "3:30",
+  solutionUnlocked = false
 }: EditorTabProps) {
   const languageOptions = [
     { value: "python", label: "Python", icon: "py" },
@@ -71,23 +77,32 @@ export default function EditorTab({
           </Select>
         </div>
 
-        <Button
-          onClick={onRunCode}
-          disabled={loading}
-          className="bg-[#007FFF] hover:bg-[#0072E5] text-white rounded-md h-9 px-4 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Just a min..
-            </>
-          ) : (
-            <>
-              <Play className="h-4 w-4" />
-              Give me hints!
-            </>
+        <div className="flex items-center gap-4">
+          {timerActive && (
+            <div className="flex items-center gap-2 bg-[#0A1929] px-3 py-1.5 rounded-md border border-[#1E3A5F] animate-pulse">
+              <Clock className="h-4 w-4 text-[#FF5722]" />
+              <span className="text-white font-mono font-bold">{timeRemaining}</span>
+            </div>
           )}
-        </Button>
+
+          <Button
+            onClick={onRunCode}
+            disabled={loading}
+            className="bg-[#007FFF] hover:bg-[#0072E5] text-white rounded-md h-9 px-4 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Just a min..
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4" />
+                Give me hints!
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <div className="p-4">
@@ -131,10 +146,16 @@ export default function EditorTab({
             <div className="p-3 border-t border-[#1E3A5F]">
               <Button 
                 onClick={onViewOptimizedCode}
-                className="w-full bg-[#007FFF] hover:bg-[#0072E5] text-white text-sm"
-                disabled={!hints.length || loading}
+                className={`w-full text-white text-sm transition-all duration-300 ${
+                  solutionUnlocked 
+                    ? "bg-[#007FFF] hover:bg-[#0072E5]" 
+                    : "bg-[#1E3A5F] cursor-not-allowed filter blur-[1px] hover:blur-0"
+                }`}
+                disabled={!hints.length || loading || !solutionUnlocked}
               >
-                View Optimized Solution
+                {timerActive && !solutionUnlocked 
+                  ? `Wait ${timeRemaining} for solution` 
+                  : "View Optimized Solution"}
               </Button>
             </div>
           </div>

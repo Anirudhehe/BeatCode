@@ -18,15 +18,48 @@ export default function EditorPage() {
   const [memoryData, setMemoryData] = useState({ current: 5.2, optimal: 2.1 })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-
+  
+  // In the EditorPage component:
+  
+  // Add countdown timer state
+  const [timerActive, setTimerActive] = useState(false)
+  const [timeRemaining, setTimeRemaining] = useState(30) // 3.5 minutes in seconds
+  const [solutionUnlocked, setSolutionUnlocked] = useState(false)
+  
+  // Timer effect
+  useEffect(() => {
+    let interval = null;
+    
+    if (timerActive && timeRemaining > 0) {
+      interval = setInterval(() => {
+        setTimeRemaining(prevTime => prevTime - 1);
+      }, 1000);
+    } else if (timerActive && timeRemaining === 0) {
+      setTimerActive(false);
+      setSolutionUnlocked(true);
+      clearInterval(interval);
+    }
+    
+    return () => clearInterval(interval);
+  }, [timerActive, timeRemaining]);
+  
+  // Format time for display
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+  
+  // In the handleRunCode function:
   const handleRunCode = async () => {
     if (!code.trim()) {
       alert("Please enter some code first");
       return;
     }
-
+  
     setLoading(true);
     setHints([]);
+    setSolutionUnlocked(false);
     
     try {
       // Call the hints API endpoint
@@ -67,6 +100,11 @@ export default function EditorPage() {
         setHints(lines);
       }
       
+      // Start the countdown timer
+      setTimeRemaining(30); // Reset to 3.5 minutes
+      setTimerActive(true);
+      setSolutionUnlocked(false);
+      
     } catch (error) {
       console.error("Error getting hints:", error);
       alert(error.message || "Failed to get hints. Please try again.");
@@ -76,6 +114,11 @@ export default function EditorPage() {
   }
 
   const handleViewOptimizedCode = async () => {
+    if (!solutionUnlocked && timerActive) {
+      alert("Please wait for the timer to complete before viewing the optimized solution.");
+      return;
+    }
+    
     setLoading(true);
     
     try {
@@ -94,6 +137,11 @@ export default function EditorPage() {
       
       // Set the optimized code from the API response
       setOptimizedCode(data.result);
+      
+      // Store code in localStorage for visualization
+      localStorage.setItem('originalCode', code);
+      localStorage.setItem('optimizedCode', data.result);
+      localStorage.setItem('language', language);
       
       // Switch to results tab to show the comparison
       setActiveTab("results");
@@ -126,6 +174,9 @@ export default function EditorPage() {
               loading={loading}
               hints={hints}
               onViewOptimizedCode={handleViewOptimizedCode}
+              timerActive={timerActive}
+              timeRemaining={formatTime(timeRemaining)}
+              solutionUnlocked={solutionUnlocked}
             />
           )}
 
