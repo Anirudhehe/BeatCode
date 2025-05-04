@@ -160,7 +160,7 @@ export default function EditorPage() {
           />
           <div className="fixed top-0 left-0 w-64 h-full bg-[#1E293B] text-white shadow-lg z-50 p-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="font-semibold">Saved Solutions</h2>
+              <h2 className="font-semibold">... History</h2>
               <button 
                 onClick={() => setSidebarOpen(false)}
                 className="hover:bg-[#334155] p-1 rounded-md transition-colors"
