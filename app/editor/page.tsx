@@ -24,7 +24,7 @@ export default function EditorPage() {
   const [error, setError] = useState("")
 
   const [timerActive, setTimerActive] = useState(false)
-  const [timeRemaining, setTimeRemaining] = useState(30)
+  const [timeRemaining, setTimeRemaining] = useState(10)
   const [solutionUnlocked, setSolutionUnlocked] = useState(false)
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -104,7 +104,7 @@ export default function EditorPage() {
       }
 
       // Start timer on getting hints
-      setTimeRemaining(30)
+      setTimeRemaining(10)
       setTimerActive(true)
     } catch (error) {
       console.error("Error getting hints:", error)

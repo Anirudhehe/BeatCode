@@ -76,7 +76,7 @@ export const hints = async(userCode, language) => {
     3. Format your response with bullet points (•)  whith no *and # for each hint .
     4. Keep each hints SHORT and CONSIZE and focused on a specific improvement.
     5.(each hint shouldn't be more than 10 words).
-    6. Let the last bullet point be "Use these hints and try again!"`
+    6. Let the last bullet point be "Use these hints and try again, we've got a timer to keep you on your toes :)!"`
     ;
 
     const result = await model.generateContent(prompt);
