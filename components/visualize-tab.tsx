@@ -12,10 +12,13 @@ export default function VisualizeTab({ timeData: initialTimeData, memoryData }: 
   const [complexityInfo, setComplexityInfo] = useState({
     currentTime: "O(n²)",
     optimalTime: "O(n)",
+    currentSpace: "O(n)",
+    optimalSpace: "O(1)",
     analysis: "Your solution uses a nested loop approach with O(n²) time complexity. The optimal solution uses a hashmap to achieve O(1) lookups, resulting in O(n) overall time complexity."
   })
   const [loading, setLoading] = useState(true)
   const [timeData, setTimeData] = useState(initialTimeData || { current: 0.2, optimal: 0.04 })
+  const [spaceData, setSpaceData] = useState(memoryData || { current: 0.1, optimal: 0.02 })
 
   useEffect(() => {
     console.log("VisualizeTab mounted, fetching complexity data...");
@@ -65,7 +68,7 @@ export default function VisualizeTab({ timeData: initialTimeData, memoryData }: 
       console.error("Error fetching complexity data:", error);
       // Use mock data as fallback
       console.log("Using mock data as fallback");
-      const mockResponse = "1. O(n²) 2. O(n)";
+      const mockResponse = "1. O(n²) 2. O(n) 3. O(n) 4. O(1)";
       processApiResponse(mockResponse);
     }
   };
@@ -74,31 +77,25 @@ export default function VisualizeTab({ timeData: initialTimeData, memoryData }: 
     try {
       console.log("Processing API response text:", response);
       
-      // Simpler regex patterns specifically for the "1. O(n^2)" and "2. O(n)" format
-      const originalComplexityMatch = response.match(/1\.\s*(O\([^)]+\))/i);
-      const optimizedComplexityMatch = response.match(/2\.\s*(O\([^)]+\))/i);
+      const originalTimeMatch = response.match(/1\.\s*(O\([^)]+\))/i);
+      const optimizedTimeMatch = response.match(/2\.\s*(O\([^)]+\))/i);
+      const originalSpaceMatch = response.match(/3\.\s*(O\([^)]+\))/i);
+      const optimizedSpaceMatch = response.match(/4\.\s*(O\([^)]+\))/i);
       
-      console.log("Regex matches:", { 
-        originalMatch: originalComplexityMatch, 
-        optimizedMatch: optimizedComplexityMatch 
-      });
-      
-      // Extract the matched values or use defaults
-      const originalComplexity = originalComplexityMatch ? originalComplexityMatch[1] : "O(n²)";
-      const optimizedComplexity = optimizedComplexityMatch ? optimizedComplexityMatch[1] : "O(n)";
-      
-      console.log("Extracted time complexities:", {
-        original: originalComplexity,
-        optimized: optimizedComplexity
-      });
+      const originalTime = originalTimeMatch ? originalTimeMatch[1] : "O(n²)";
+      const optimizedTime = optimizedTimeMatch ? optimizedTimeMatch[1] : "O(n)";
+      const originalSpace = originalSpaceMatch ? originalSpaceMatch[1] : "O(n)";
+      const optimizedSpace = optimizedSpaceMatch ? optimizedSpaceMatch[1] : "O(1)";
       
       setComplexityInfo({
-        currentTime: originalComplexity,
-        optimalTime: optimizedComplexity,
-        analysis: `Your solution has ${originalComplexity} time complexity. The optimized solution improves this to ${optimizedComplexity} time complexity.`
+        currentTime: originalTime,
+        optimalTime: optimizedTime,
+        currentSpace: originalSpace,
+        optimalSpace: optimizedSpace,
+        analysis: `Your solution has ${originalTime} time complexity and ${originalSpace} space complexity. The optimized solution improves this to ${optimizedTime} time complexity and ${optimizedSpace} space complexity.`
       });
       
-      updateVisualizationData(originalComplexity, optimizedComplexity);
+      updateVisualizationData(originalTime, optimizedTime, originalSpace, optimizedSpace);
     } catch (error) {
       console.error("Error processing API response:", error);
     } finally {
@@ -171,6 +168,9 @@ export default function VisualizeTab({ timeData: initialTimeData, memoryData }: 
         yourTime = 0.08 + (n * n * 0.01);
       } else if (originalComplexity.includes('n log')) {
         yourTime = 0.08 + (n * Math.log(n) * 0.02);
+      } else if (originalComplexity.includes('log')) {
+        // Special handling for logarithmic complexity
+        yourTime = 0.08 + (Math.log(n + 1) * 0.04);
       } else if (originalComplexity.includes('n)')) {
         yourTime = 0.08 + (n * 0.04);
       } else {
@@ -180,11 +180,20 @@ export default function VisualizeTab({ timeData: initialTimeData, memoryData }: 
       if (optimizedComplexity.includes('1)')) {
         optimalTime = 0.03;
       } else if (optimizedComplexity.includes('log')) {
-        optimalTime = 0.03 + (Math.log(n) * 0.005);
+        // Make optimal logarithmic solution visibly different
+        optimalTime = 0.03 + (Math.log(n + 1) * 0.02);
       } else if (optimizedComplexity.includes('n)')) {
-        optimalTime = 0.03 + (n * 0.005);
+        const baseTime = 0.03 + (n * 0.005);
+        optimalTime = originalComplexity === optimizedComplexity ? 
+          baseTime * 0.85 : 
+          baseTime;
       } else {
         optimalTime = 0.03 + (n * 0.005);
+      }
+      
+      // Ensure minimum difference between solutions
+      if (Math.abs(yourTime - optimalTime) < 0.02) {
+        optimalTime = yourTime * 0.85; // Create at least 15% difference
       }
       
       data.push({
@@ -238,54 +247,108 @@ export default function VisualizeTab({ timeData: initialTimeData, memoryData }: 
   }
 
   return (
-    <div className="bg-[#132F4C] rounded-lg border border-[#1E3A5F] overflow-hidden">
-      <div className="p-4 border-b border-[#1E3A5F]">
-        <h2 className="text-sm font-medium text-white">Time Complexity Analysis</h2>
+    <div className="space-y-8">
+      {/* Time Complexity Graph */}
+      <div className="bg-[#132F4C] rounded-lg border border-[#1E3A5F] overflow-hidden">
+        <div className="p-4 border-b border-[#1E3A5F]">
+          <h2 className="text-sm font-medium text-white">Time Complexity Analysis</h2>
+        </div>
+
+        <div className="p-6 space-y-6 time-complexity-container">
+          <p className="text-[#94A3B8] text-sm">{complexityInfo.analysis}</p>
+
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" />
+              <XAxis 
+                dataKey="n" 
+                stroke="#94A3B8" 
+                label={{ value: 'Input Size (n)', position: 'insideBottom', offset: -5, fill: '#94A3B8' }} 
+              />
+              <YAxis 
+                stroke="#94A3B8" 
+                label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fill: '#94A3B8' }}
+              />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#1E3A5F', border: 'none', borderRadius: '4px' }}
+                labelStyle={{ color: 'white' }}
+                formatter={(value, name) => [`Time : ${value}s`, name]}
+              />
+              <Legend wrapperStyle={{ color: '#94A3B8' }} />
+              <Line 
+                type="monotone" 
+                dataKey="Your Solution" 
+                stroke="#007FFF" 
+                strokeWidth={2} 
+                dot={{ fill: '#007FFF', r: 4 }} 
+                activeDot={{ r: 6 }} 
+              />
+              <Line 
+                type="monotone" 
+                dataKey="Optimal Solution" 
+                stroke="#22C55E" 
+                strokeWidth={2} 
+                dot={{ fill: '#22C55E', r: 4 }} 
+                activeDot={{ r: 6 }} 
+              />
+            </LineChart>
+          </ResponsiveContainer>
+
+          <div className="flex justify-between text-xs text-white mt-2">
+            <span>Your Code: {complexityInfo.currentTime}</span>
+            <span>Optimal Code: {complexityInfo.optimalTime}</span>
+          </div>
+        </div>
       </div>
 
-      <div className="p-6 space-y-6 time-complexity-container">
-        <p className="text-[#94A3B8] text-sm">{complexityInfo.analysis}</p>
+      {/* Space Complexity Graph */}
+      <div className="bg-[#132F4C] rounded-lg border border-[#1E3A5F] overflow-hidden">
+        <div className="p-4 border-b border-[#1E3A5F]">
+          <h2 className="text-sm font-medium text-white">Space Complexity Analysis</h2>
+        </div>
 
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" />
-            <XAxis 
-              dataKey="n" 
-              stroke="#94A3B8" 
-              label={{ value: 'Input Size (n)', position: 'insideBottom', offset: -5, fill: '#94A3B8' }} 
-            />
-            <YAxis 
-              stroke="#94A3B8" 
-              label={{ value: 'Time (s)', angle: -90, position: 'insideLeft', fill: '#94A3B8' }}
-            />
-            <Tooltip 
-              contentStyle={{ backgroundColor: '#1E3A5F', border: 'none', borderRadius: '4px' }}
-              labelStyle={{ color: 'white' }}
-              formatter={(value, name) => [`Time : ${value}s`, name]}
-            />
-            <Legend wrapperStyle={{ color: '#94A3B8' }} />
-            <Line 
-              type="monotone" 
-              dataKey="Your Solution" 
-              stroke="#007FFF" 
-              strokeWidth={2} 
-              dot={{ fill: '#007FFF', r: 4 }} 
-              activeDot={{ r: 6 }} 
-            />
-            <Line 
-              type="monotone" 
-              dataKey="Optimal Solution" 
-              stroke="#22C55E" 
-              strokeWidth={2} 
-              dot={{ fill: '#22C55E', r: 4 }} 
-              activeDot={{ r: 6 }} 
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="p-6 space-y-6 space-complexity-container">
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={generateChartData(complexityInfo.currentSpace, complexityInfo.optimalSpace)} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1E3A5F" />
+              <XAxis 
+                dataKey="n" 
+                stroke="#94A3B8" 
+                label={{ value: 'Input Size (n)', position: 'insideBottom', offset: -5, fill: '#94A3B8' }} 
+              />
+              <YAxis 
+                stroke="#94A3B8" 
+                label={{ value: 'Memory (MB)', angle: -90, position: 'insideLeft', fill: '#94A3B8' }}
+              />
+              <Tooltip 
+                contentStyle={{ backgroundColor: '#1E3A5F', border: 'none', borderRadius: '4px' }}
+                labelStyle={{ color: 'white' }}
+                formatter={(value, name) => [`Memory : ${value}MB`, name]}
+              />
+              <Legend wrapperStyle={{ color: '#94A3B8' }} />
+              <Line 
+                type="monotone" 
+                dataKey="Your Solution" 
+                stroke="#007FFF" 
+                strokeWidth={2} 
+                dot={{ fill: '#007FFF', r: 4 }} 
+                activeDot={{ r: 6 }} 
+              />
+              <Line 
+                type="monotone" 
+                dataKey="Optimal Solution" 
+                stroke="#22C55E" 
+                strokeWidth={2} 
+                dot={{ fill: '#22C55E', r: 4 }} 
+                activeDot={{ r: 6 }} 
+              />
+            </LineChart>
+          </ResponsiveContainer>
 
-        <div className="flex justify-between text-xs text-white mt-2">
-          <span>Your Code: {complexityInfo.currentTime}</span>
-          <span>Optimal Code: {complexityInfo.optimalTime}</span>
+          <div className="flex justify-between text-xs text-white mt-2">
+            <span>Your Code: {complexityInfo.currentSpace}</span>
+            <span>Optimal Code: {complexityInfo.optimalSpace}</span>
+          </div>
         </div>
       </div>
     </div>

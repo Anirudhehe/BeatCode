@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -8,14 +7,16 @@ import { useSession } from "next-auth/react"
 import { saveUserSolution } from "@/lib/firestore"
 import { toast } from "sonner"
 import VisualizeTab from "./visualize-tab"
+import Editor from '@monaco-editor/react'
 
 interface ResultsTabProps {
   output: string;
   optimizedCode: string;
   originalCode: string;
+  language?: string;
 }
 
-export default function ResultsTab({ output, optimizedCode, originalCode }: ResultsTabProps) {
+export default function ResultsTab({ output, optimizedCode, originalCode, language = 'python' }: ResultsTabProps) {
   const [showVisualization, setShowVisualization] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [problemName, setProblemName] = useState("")
@@ -23,11 +24,9 @@ export default function ResultsTab({ output, optimizedCode, originalCode }: Resu
   const { data: session } = useSession()
 
   const handleVisualize = () => {
-    // Store the code in localStorage before navigating
     localStorage.setItem('originalCode', originalCode)
     localStorage.setItem('optimizedCode', optimizedCode)
-    localStorage.setItem('language', 'python') // Or get this from props
-    
+    localStorage.setItem('language', language)
     setShowVisualization(true)
   }
 
@@ -77,19 +76,35 @@ export default function ResultsTab({ output, optimizedCode, originalCode }: Resu
 
   return (
     <div className="grid grid-cols-2 gap-6 h-full">
-      {/* Original Code Block */}
+      {/* Original Code */}
       <div className="bg-[#132F4C] rounded-lg border border-[#1E3A5F] overflow-hidden">
         <div className="p-4 border-b border-[#1E3A5F]">
           <h2 className="text-white font-medium">Original Solution</h2>
         </div>
-        <div className="p-4 max-h-[400px] overflow-auto">
-          <pre className="text-white font-mono text-sm whitespace-pre-wrap">
-            {originalCode}
-          </pre>
+        <div className="p-4">
+          <div className="h-[500px] relative">
+            <Editor
+              height="100%"
+              language={language}
+              theme="vs-dark"
+              value={originalCode}
+              options={{
+                readOnly: true,
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: 'Consolas, monospace',
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                wordWrap: 'on',
+                wrappingIndent: 'indent'
+              }}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Optimized Code Block + Save */}
+      {/* Optimized Code */}
       <div className="bg-[#132F4C] rounded-lg border border-[#1E3A5F] overflow-hidden relative">
         <div className="p-4 border-b border-[#1E3A5F] flex items-center justify-between">
           <h2 className="text-white font-medium">Optimized Solution</h2>
@@ -101,10 +116,26 @@ export default function ResultsTab({ output, optimizedCode, originalCode }: Resu
             Save
           </Button>
         </div>
-        <div className="p-4 max-h-[400px] overflow-auto">
-          <pre className="text-white font-mono text-sm whitespace-pre-wrap">
-            {optimizedCode}
-          </pre>
+        <div className="p-4">
+          <div className="h-[500px] relative">
+            <Editor
+              height="100%"
+              language={language}
+              theme="vs-dark"
+              value={optimizedCode}
+              options={{
+                readOnly: true,
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: 'Consolas, monospace',
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                wordWrap: 'on',
+                wrappingIndent: 'indent'
+              }}
+            />
+          </div>
         </div>
 
         {/* Save Dialog */}
@@ -120,10 +151,10 @@ export default function ResultsTab({ output, optimizedCode, originalCode }: Resu
               className="mt-2"
             />
             <div className="flex justify-end gap-2 mt-4">
-            <Button variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save"}
-            </Button>
+              <Button variant="ghost" className="text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save"}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

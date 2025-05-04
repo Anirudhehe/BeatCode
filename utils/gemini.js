@@ -47,6 +47,8 @@ export const compareSolutions = async(userCode,language,optimalSolution)=>{
     Please Provide :
     1. Time complexity of original solution in one word like O(n).
     2. Time complexity of optimized solution in one word like O(n).
+    3. Space complexity of original solution in one word like O(n).
+    4. Space complexity of optimized solution in one word like O(n).
 `;
 
     const result = await model.generateContent(prompt);
