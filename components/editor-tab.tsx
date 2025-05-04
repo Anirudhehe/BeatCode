@@ -1,9 +1,9 @@
 "use client"
-
 import { useState } from "react"
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
+import Editor from '@monaco-editor/react'
+import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Play, Loader2, LightbulbIcon, Clock } from "lucide-react"
+import { Play, Loader2, Lightbulb as LightbulbIcon, Clock } from "lucide-react"
 
 interface EditorTabProps {
   code: string
@@ -14,9 +14,9 @@ interface EditorTabProps {
   loading?: boolean
   hints?: string[]
   onViewOptimizedCode?: () => void
-  timerActive?: boolean;
-  timeRemaining?: string;
-  solutionUnlocked?: boolean;
+  timerActive?: boolean
+  timeRemaining?: string
+  solutionUnlocked?: boolean
 }
 
 export default function EditorTab({ 
@@ -25,7 +25,7 @@ export default function EditorTab({
   language, 
   setLanguage, 
   onRunCode, 
-  loading, 
+  loading = false, 
   hints = [], 
   onViewOptimizedCode,
   timerActive = false,
@@ -107,21 +107,25 @@ export default function EditorTab({
 
       <div className="p-4">
         <div className="grid grid-cols-4 gap-4">
-          {/* Code Editor - Takes 3/4 of the space */}
-          <div className="col-span-3 relative">
-            <div className="absolute left-0 top-0 h-full w-12 bg-[#0A1929] border-r border-[#1E3A5F] flex flex-col items-center pt-4 text-xs text-[#94A3B8] font-mono">
-              {getLineNumbers()}
-            </div>
-            <textarea
+          <div className="col-span-3 relative h-[500px]">
+            <Editor
+              height="100%"
+              language={language}
+              theme="vs-dark"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full h-[500px] pl-12 p-4 font-['Consolas'] text-sm bg-[#0A1929] text-white border-0 focus:outline-none focus:ring-0 resize-none"
-              placeholder="  Write your code here..."
-              spellCheck="false"
+              onChange={(value) => setCode(value || '')}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: 'Consolas, monospace',
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+              }}
             />
           </div>
-          
-          {/* Hints Panel - Takes 1/4 of the space */}
+
+          {/* Hints Panel */}
           <div className="col-span-1 bg-[#0A1929] border border-[#1E3A5F] rounded-lg overflow-hidden flex flex-col">
             <div className="p-3 border-b border-[#1E3A5F] bg-[#132F4C]">
               <h3 className="text-white font-medium flex items-center">
