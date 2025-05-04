@@ -171,6 +171,9 @@ export default function VisualizeTab({ timeData: initialTimeData, memoryData }: 
         yourTime = 0.08 + (n * n * 0.01);
       } else if (originalComplexity.includes('n log')) {
         yourTime = 0.08 + (n * Math.log(n) * 0.02);
+      } else if (originalComplexity.includes('log')) {
+        // Special handling for logarithmic complexity
+        yourTime = 0.08 + (Math.log(n + 1) * 0.04);
       } else if (originalComplexity.includes('n)')) {
         yourTime = 0.08 + (n * 0.04);
       } else {
@@ -180,11 +183,20 @@ export default function VisualizeTab({ timeData: initialTimeData, memoryData }: 
       if (optimizedComplexity.includes('1)')) {
         optimalTime = 0.03;
       } else if (optimizedComplexity.includes('log')) {
-        optimalTime = 0.03 + (Math.log(n) * 0.005);
+        // Make optimal logarithmic solution visibly different
+        optimalTime = 0.03 + (Math.log(n + 1) * 0.02);
       } else if (optimizedComplexity.includes('n)')) {
-        optimalTime = 0.03 + (n * 0.005);
+        const baseTime = 0.03 + (n * 0.005);
+        optimalTime = originalComplexity === optimizedComplexity ? 
+          baseTime * 0.85 : 
+          baseTime;
       } else {
         optimalTime = 0.03 + (n * 0.005);
+      }
+      
+      // Ensure minimum difference between solutions
+      if (Math.abs(yourTime - optimalTime) < 0.02) {
+        optimalTime = yourTime * 0.85; // Create at least 15% difference
       }
       
       data.push({
