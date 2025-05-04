@@ -106,6 +106,21 @@ export default function EditorTab({
                 lineNumbers: 'on',
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
+                theme: {
+                  colors: {
+                    'editor.background': '#0B1C2D',
+                    'editor.lineHighlightBackground': '#132F4C',
+                    'editorLineNumber.foreground': '#3E5875',
+                    'editorLineNumber.activeForeground': '#007FFF',
+                    'editor.selectionBackground': '#132F4C80',
+                    'editor.inactiveSelectionBackground': '#132F4C40',
+                    'editorGutter.background': '#0B1C2D',
+                    'editorWidget.background': '#0B1C2D',
+                    'editorSuggestWidget.background': '#0B1C2D',
+                    'editorHoverWidget.background': '#0B1C2D',
+                    'editor.lineHighlightBorder': '#132F4C00'
+                  }
+                }
               }}
             />
           </div>

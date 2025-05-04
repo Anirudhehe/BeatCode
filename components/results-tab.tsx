@@ -1,21 +1,23 @@
+"use client"
 import { Separator } from "@/components/ui/separator"
 import { useState } from "react"
 import VisualizeTab from "./visualize-tab"
+import Editor from '@monaco-editor/react'
 
 interface ResultsTabProps {
   output: string;
   optimizedCode: string;
   originalCode: string;
+  language?: string;
 }
 
-export default function ResultsTab({ output, optimizedCode, originalCode }: ResultsTabProps) {
+export default function ResultsTab({ output, optimizedCode, originalCode, language = 'python' }: ResultsTabProps) {
   const [showVisualization, setShowVisualization] = useState(false);
 
   const handleVisualize = () => {
-    // Store the code in localStorage before navigating
     localStorage.setItem('originalCode', originalCode);
     localStorage.setItem('optimizedCode', optimizedCode);
-    localStorage.setItem('language', 'python'); // Or get this from props
+    localStorage.setItem('language', language);
     
     setShowVisualization(true);
   };
@@ -41,9 +43,25 @@ export default function ResultsTab({ output, optimizedCode, originalCode }: Resu
           <h2 className="text-white font-medium">Original Solution</h2>
         </div>
         <div className="p-4">
-          <pre className="text-white font-mono text-sm whitespace-pre-wrap">
-            {originalCode}
-          </pre>
+          <div className="h-[500px] relative">
+            <Editor
+              height="100%"
+              language={language}
+              theme="vs-dark"
+              value={originalCode}
+              options={{
+                readOnly: true,
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: 'Consolas, monospace',
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                wordWrap: 'on',
+                wrappingIndent: 'indent'
+              }}
+            />
+          </div>
         </div>
       </div>
       
@@ -52,9 +70,25 @@ export default function ResultsTab({ output, optimizedCode, originalCode }: Resu
           <h2 className="text-white font-medium">Optimized Solution</h2>
         </div>
         <div className="p-4">
-          <pre className="text-white font-mono text-sm whitespace-pre-wrap">
-            {optimizedCode}
-          </pre>
+          <div className="h-[500px] relative">
+            <Editor
+              height="100%"
+              language={language}
+              theme="vs-dark"
+              value={optimizedCode}
+              options={{
+                readOnly: true,
+                minimap: { enabled: false },
+                fontSize: 14,
+                fontFamily: 'Consolas, monospace',
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                wordWrap: 'on',
+                wrappingIndent: 'indent'
+              }}
+            />
+          </div>
         </div>
       </div>
 
