@@ -6,7 +6,12 @@ import { NextAuthProvider } from "./providers"
 export const metadata = {
   title: 'BeatCode',
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: 'C:/Users/aniru/Desktop/projects/beatcode/public/favicon.ico' },
+      { url: '/icon.png' }
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
   },
   generator: 'v0.dev'
 }
