@@ -103,8 +103,13 @@ export default function VisualizeTab({ timeData: initialTimeData, memoryData }: 
     }
   };
 
-  const updateVisualizationData = (originalComplexity: string, optimizedComplexity: string) => {
-    console.log("Updating visualization data for:", { originalComplexity, optimizedComplexity });
+  const updateVisualizationData = (originalTimeComplexity: string, optimizedTimeComplexity: string, originalSpaceComplexity: string, optimizedSpaceComplexity: string) => {
+    console.log("Updating visualization data for:", { 
+      originalTimeComplexity, 
+      optimizedTimeComplexity,
+      originalSpaceComplexity,
+      optimizedSpaceComplexity 
+    });
     
     const getTimeValue = (complexity: string) => {
       const notation = complexity.toLowerCase()
