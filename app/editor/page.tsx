@@ -21,6 +21,12 @@ export default function EditorPage() {
   const [timeData, setTimeData] = useState({ current: 0.2, optimal: 0.04 })
   const [memoryData, setMemoryData] = useState({ current: 5.2, optimal: 2.1 })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  const [timerActive, setTimerActive] = useState(false)
+  const [timeRemaining, setTimeRemaining] = useState(30)
+  const [solutionUnlocked, setSolutionUnlocked] = useState(false)
+
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userSolutions, setUserSolutions] = useState<any[]>([])
 
@@ -33,6 +39,28 @@ export default function EditorPage() {
     }
   }, [session?.user?.email])
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null
+
+    if (timerActive && timeRemaining > 0) {
+      interval = setInterval(() => {
+        setTimeRemaining((prevTime) => prevTime - 1)
+      }, 1000)
+    } else if (timerActive && timeRemaining === 0) {
+      setTimerActive(false)
+      setSolutionUnlocked(true)
+      clearInterval(interval!)
+    }
+
+    return () => clearInterval(interval!)
+  }, [timerActive, timeRemaining])
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`
+  }
+
   const handleRunCode = async () => {
     if (!code.trim()) {
       alert("Please enter some code first")
@@ -41,6 +69,7 @@ export default function EditorPage() {
 
     setLoading(true)
     setHints([])
+    setSolutionUnlocked(false)
 
     try {
       const response = await fetch("/api/hints", {
@@ -73,6 +102,10 @@ export default function EditorPage() {
         const lines = result.split("\n").filter((line: string) => line.trim())
         setHints(lines)
       }
+
+      // Start timer on getting hints
+      setTimeRemaining(30)
+      setTimerActive(true)
     } catch (error) {
       console.error("Error getting hints:", error)
       alert(error instanceof Error ? error.message : "Failed to get hints. Please try again.")
@@ -82,6 +115,11 @@ export default function EditorPage() {
   }
 
   const handleViewOptimizedCode = async () => {
+    if (!solutionUnlocked && timerActive) {
+      alert("Please wait for the timer to complete before viewing the optimized solution.")
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -98,6 +136,11 @@ export default function EditorPage() {
       }
 
       setOptimizedCode(data.result)
+
+      localStorage.setItem("originalCode", code)
+      localStorage.setItem("optimizedCode", data.result)
+      localStorage.setItem("language", language)
+
       setActiveTab("results")
     } catch (error) {
       console.error("Error optimizing code:", error)
@@ -109,7 +152,6 @@ export default function EditorPage() {
 
   return (
     <main className="min-h-screen bg-[#0A1929] flex flex-col relative">
-      {/* Sidebar */}
       {sidebarOpen && (
         <div className="fixed top-0 left-0 w-64 h-full bg-[#1E293B] text-white shadow-lg z-50 p-4">
           <div className="flex justify-between items-center mb-4">
@@ -137,7 +179,6 @@ export default function EditorPage() {
         </div>
       )}
 
-      {/* Menu Button */}
       <button
         onClick={() => setSidebarOpen(true)}
         className="absolute top-4 left-4 z-50 bg-[#1E293B] text-white p-2 rounded-md hover:bg-[#334155] shadow"
@@ -163,6 +204,9 @@ export default function EditorPage() {
               loading={loading}
               hints={hints}
               onViewOptimizedCode={handleViewOptimizedCode}
+              timerActive={timerActive}
+              timeRemaining={formatTime(timeRemaining)}
+              solutionUnlocked={solutionUnlocked}
             />
           )}
 
